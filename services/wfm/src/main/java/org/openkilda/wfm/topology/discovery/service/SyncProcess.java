@@ -22,7 +22,7 @@ import org.openkilda.messaging.info.InfoMessage;
 import org.openkilda.messaging.info.discovery.NetworkDumpBeginMarker;
 import org.openkilda.messaging.info.discovery.NetworkDumpEndMarker;
 import org.openkilda.messaging.info.discovery.NetworkDumpSwitchData;
-import org.openkilda.messaging.model.Switch;
+import org.openkilda.messaging.model.SpeakerSwitchView;
 import org.openkilda.wfm.topology.discovery.bolt.SpeakerMonitor.OutputAdapter;
 import org.openkilda.wfm.topology.event.model.Sync;
 
@@ -94,9 +94,9 @@ public class SyncProcess {
     }
 
     private void handleSwitchDump(NetworkDumpSwitchData switchDump) {
-        Switch switchRecord = switchDump.getSwitchRecord();
-        log.info("Got FL sync switch data: {}", switchRecord.getDatapath());
-        payload.addActiveSwitch(switchRecord);
+        SpeakerSwitchView switchView = switchDump.getSwitchView();
+        log.info("Got FL sync switch data: {}", switchView.getDatapath());
+        payload.addActiveSwitch(switchView);
     }
 
     private void ignoreInput(InfoMessage message) {

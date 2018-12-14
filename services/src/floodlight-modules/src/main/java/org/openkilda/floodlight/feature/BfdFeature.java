@@ -15,7 +15,7 @@
 
 package org.openkilda.floodlight.feature;
 
-import org.openkilda.messaging.model.Switch;
+import org.openkilda.messaging.model.SpeakerSwitchView;
 
 import net.floodlightcontroller.core.IOFSwitch;
 import net.floodlightcontroller.core.SwitchDescription;
@@ -24,8 +24,8 @@ import java.util.Optional;
 
 public class BfdFeature extends AbstractFeature {
     @Override
-    public Optional<Switch.Feature> discover(IOFSwitch sw) {
-        Optional<Switch.Feature> empty = Optional.empty();
+    public Optional<SpeakerSwitchView.Feature> discover(IOFSwitch sw) {
+        Optional<SpeakerSwitchView.Feature> empty = Optional.empty();
 
         SwitchDescription description = sw.getSwitchDescription();
         if (description == null) {
@@ -35,6 +35,6 @@ public class BfdFeature extends AbstractFeature {
             return empty;
         }
 
-        return Optional.of(Switch.Feature.BFD);
+        return Optional.of(SpeakerSwitchView.Feature.BFD);
     }
 }

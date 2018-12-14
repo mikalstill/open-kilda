@@ -16,7 +16,7 @@
 package org.openkilda.messaging.info.event;
 
 import org.openkilda.messaging.info.CacheTimeTag;
-import org.openkilda.messaging.model.Switch;
+import org.openkilda.messaging.model.SpeakerSwitchView;
 import org.openkilda.model.SwitchId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -62,7 +62,7 @@ public class SwitchInfoData extends CacheTimeTag {
      * {@link SwitchInfoData} object.
      */
     @JsonProperty("switch")
-    private Switch switchRecord;
+    private SpeakerSwitchView switchView;
 
     public SwitchInfoData(SwitchId switchId, SwitchChangeType state) {
         this(switchId, state, null, null, null, null, null);
@@ -82,7 +82,7 @@ public class SwitchInfoData extends CacheTimeTag {
      * @param hostname    switch name
      * @param description switch description
      * @param controller  switch controller
-     * @param switchRecord data for ISL/switch discovery
+     * @param switchView data for ISL/switch discovery
      */
     @Builder
     @JsonCreator
@@ -92,13 +92,13 @@ public class SwitchInfoData extends CacheTimeTag {
                           @JsonProperty("hostname") String hostname,
                           @JsonProperty("description") String description,
                           @JsonProperty("controller") String controller,
-                          @JsonProperty("switch") Switch switchRecord) {
+                          @JsonProperty("switch") SpeakerSwitchView switchView) {
         this.switchId = switchId;
         this.state = state;
         this.address = address;
         this.hostname = hostname;
         this.description = description;
         this.controller = controller;
-        this.switchRecord = switchRecord;
+        this.switchView = switchView;
     }
 }
