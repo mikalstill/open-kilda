@@ -26,7 +26,7 @@ import org.openkilda.messaging.info.discovery.NetworkDumpSwitchData;
 import org.openkilda.model.SwitchId;
 import org.openkilda.wfm.CommandContext;
 import org.openkilda.wfm.topology.discovery.bolt.SpeakerMonitor.OutputAdapter;
-import org.openkilda.wfm.topology.event.model.Sync;
+import org.openkilda.wfm.topology.discovery.model.SpeakerSync;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -72,8 +72,8 @@ public class SyncProcessTest {
         Assert.assertFalse(process.isComplete());
         process.input(new InfoMessage(new NetworkDumpEndMarker(), timestamp, validCorrelationId));
 
-        Sync actual = process.getPayload();
-        Sync expected = new Sync();
+        SpeakerSync actual = process.getPayload();
+        SpeakerSync expected = new SpeakerSync();
         expected.addActiveSwitch(swAlpha);
         expected.addActivePort(swAlpha, 1);
         expected.addActiveSwitch(swBeta);

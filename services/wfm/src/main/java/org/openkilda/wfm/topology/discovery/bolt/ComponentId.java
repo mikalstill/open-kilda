@@ -22,6 +22,12 @@ public enum ComponentId {
     INPUT_DECODER("input.decoder"),
 
     FL_MONITOR("fl-monitor"),
+    NETWORK_PRELOADER("network-preloader"),
+    SWITCH_HANDLER("switch-handler"),
+    PORT_HANDLER("port-handler"),
+    BFD_PORT_HANDLER("bfd-port-handler"),
+    UNI_ISL_HANDLER("uni-isl-handler"),
+    ISL_HANDLER("isl-handler"),
 
     SPEAKER_ENCODER("speaker.encoder"),
     SPEAKER_OUTPUT("speaker.output");

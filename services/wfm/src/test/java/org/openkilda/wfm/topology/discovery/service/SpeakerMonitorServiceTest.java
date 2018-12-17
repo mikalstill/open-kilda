@@ -29,7 +29,7 @@ import org.openkilda.messaging.info.event.PortInfoData;
 import org.openkilda.model.SwitchId;
 import org.openkilda.wfm.CommandContext;
 import org.openkilda.wfm.topology.discovery.bolt.SpeakerMonitor.OutputAdapter;
-import org.openkilda.wfm.topology.event.model.Sync;
+import org.openkilda.wfm.topology.discovery.model.SpeakerSync;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -52,13 +52,13 @@ public class SpeakerMonitorServiceTest {
         verify(output).speakerCommand(any(NetworkCommandData.class));
 
         monitor.speakerMessage(output, new InfoMessage(new NetworkDumpEndMarker(), 0, context.getCorrelationId()));
-        verify(output).shareSync(any(Sync.class));
+        verify(output).shareSync(any(SpeakerSync.class));
 
         // proxy
         output = makeOutputMock();
         monitor.speakerMessage(output, new InfoMessage(
                 new PortInfoData(new SwitchId(1L), 1, PortChangeType.UP), 0, "port-up-message"));
-        verify(output).proxyCurrentTuple();
+        verify(output).proxySpeakerTuple();
 
         // lost
         output = makeOutputMock();
@@ -66,7 +66,7 @@ public class SpeakerMonitorServiceTest {
         monitor.timerTick(output, 6000);
         monitor.speakerMessage(output, new InfoMessage(
                 new PortInfoData(new SwitchId(1L), 1, PortChangeType.UP), 0, "port-up-message"));
-        verify(output, never()).proxyCurrentTuple();
+        verify(output, never()).proxySpeakerTuple();
     }
 
     @Test

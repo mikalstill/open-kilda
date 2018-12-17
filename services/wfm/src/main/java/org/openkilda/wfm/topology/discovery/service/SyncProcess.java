@@ -1,5 +1,4 @@
-/*
- * Copyright 2018 Telstra Open Source
+/* Copyright 2018 Telstra Open Source
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -24,10 +23,13 @@ import org.openkilda.messaging.info.discovery.NetworkDumpEndMarker;
 import org.openkilda.messaging.info.discovery.NetworkDumpSwitchData;
 import org.openkilda.messaging.model.SpeakerSwitchView;
 import org.openkilda.wfm.topology.discovery.bolt.SpeakerMonitor.OutputAdapter;
-import org.openkilda.wfm.topology.event.model.Sync;
+import org.openkilda.wfm.topology.discovery.model.SpeakerSync;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 public class SyncProcess {
@@ -36,8 +38,7 @@ public class SyncProcess {
     @Getter
     private boolean complete = false;
 
-    @Getter
-    private final Sync payload = new Sync();
+    private final List<SpeakerSwitchView> payload = new ArrayList<>();
 
     public SyncProcess(OutputAdapter outputAdapter, long timestamp, long timeout) {
         correlationId = outputAdapter.getContext().getCorrelationId();
@@ -59,6 +60,10 @@ public class SyncProcess {
         if (!handled) {
             ignoreInput(message);
         }
+    }
+
+    public SpeakerSync collectResults() {
+        return new SpeakerSync(payload);
     }
 
     public boolean isStale(long timestamp) {
@@ -96,7 +101,7 @@ public class SyncProcess {
     private void handleSwitchDump(NetworkDumpSwitchData switchDump) {
         SpeakerSwitchView switchView = switchDump.getSwitchView();
         log.info("Got FL sync switch data: {}", switchView.getDatapath());
-        payload.addActiveSwitch(switchView);
+        payload.add(switchView);
     }
 
     private void ignoreInput(InfoMessage message) {

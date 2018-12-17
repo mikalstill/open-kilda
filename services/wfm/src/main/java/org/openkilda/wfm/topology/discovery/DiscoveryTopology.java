@@ -15,18 +15,27 @@
 
 package org.openkilda.wfm.topology.discovery;
 
+import org.openkilda.persistence.PersistenceManager;
+import org.openkilda.persistence.spi.PersistenceProvider;
 import org.openkilda.wfm.LaunchEnvironment;
 import org.openkilda.wfm.topology.AbstractTopology;
+import org.openkilda.wfm.topology.discovery.bolt.BfdPortHandler;
 import org.openkilda.wfm.topology.discovery.bolt.ComponentId;
-import org.openkilda.wfm.topology.discovery.bolt.SpeakerMonitor;
 import org.openkilda.wfm.topology.discovery.bolt.InputDecoder;
+import org.openkilda.wfm.topology.discovery.bolt.IslHandler;
 import org.openkilda.wfm.topology.discovery.bolt.MonotonicTick;
+import org.openkilda.wfm.topology.discovery.bolt.PortHandler;
 import org.openkilda.wfm.topology.discovery.bolt.SpeakerEncoder;
+import org.openkilda.wfm.topology.discovery.bolt.SpeakerMonitor;
+import org.openkilda.wfm.topology.discovery.bolt.SwitchHandler;
+import org.openkilda.wfm.topology.discovery.bolt.NetworkPreloader;
+import org.openkilda.wfm.topology.discovery.bolt.UniIslHandler;
 
 import org.apache.storm.generated.StormTopology;
 import org.apache.storm.kafka.bolt.KafkaBolt;
 import org.apache.storm.kafka.spout.KafkaSpout;
 import org.apache.storm.topology.TopologyBuilder;
+import org.apache.storm.tuple.Fields;
 
 public class DiscoveryTopology extends AbstractTopology<DiscoveryTopologyConfig> {
     public DiscoveryTopology(LaunchEnvironment env) {
@@ -46,9 +55,15 @@ public class DiscoveryTopology extends AbstractTopology<DiscoveryTopologyConfig>
         input(topology, scaleFactor);
 
         speakerMonitor(topology);
-        switchHandler(topology, scaleFactor);
-        portHandler(topology, scaleFactor);
-        islHandler(topology, scaleFactor);
+
+        PersistenceManager persistenceManager =
+                PersistenceProvider.getInstance().createPersistenceManager(configurationProvider);
+        switchPreloader(topology, persistenceManager);
+        switchHandler(topology, persistenceManager, scaleFactor);
+        portHandler(topology, persistenceManager, scaleFactor);
+        bfdPortHandler(topology, persistenceManager, scaleFactor);
+        uniIslHandler(topology, persistenceManager, scaleFactor);
+        islHandler(topology, persistenceManager, scaleFactor);
 
         output(topology, scaleFactor);
 
@@ -75,6 +90,49 @@ public class DiscoveryTopology extends AbstractTopology<DiscoveryTopologyConfig>
         topology.setBolt(SpeakerMonitor.BOLT_ID, bolt, 1)
                 .allGrouping(MonotonicTick.BOLT_ID)
                 .allGrouping(InputDecoder.BOLT_ID);
+    }
+
+    private void switchPreloader(TopologyBuilder topology, PersistenceManager persistenceManager) {
+        NetworkPreloader spout = new NetworkPreloader(persistenceManager);
+        topology.setSpout(NetworkPreloader.SPOUT_ID, spout, 1);
+    }
+
+    private void switchHandler(TopologyBuilder topology, PersistenceManager persistenceManager, int scaleFactor) {
+        SwitchHandler bolt = new SwitchHandler(persistenceManager);
+        Fields grouping = new Fields(SpeakerMonitor.FIELD_ID_SWITCH_ID);
+        topology.setBolt(SwitchHandler.BOLT_ID, bolt, scaleFactor)
+                .fieldsGrouping(NetworkPreloader.SPOUT_ID, grouping)
+                .fieldsGrouping(SpeakerMonitor.BOLT_ID, grouping)
+                .fieldsGrouping(SpeakerMonitor.BOLT_ID, SpeakerMonitor.STREAM_REFRESH_ID, grouping)
+                .allGrouping(SpeakerMonitor.BOLT_ID, SpeakerMonitor.STREAM_SYNC_ID);
+    }
+
+    private void portHandler(TopologyBuilder topology, PersistenceManager persistenceManager, int scaleFactor) {
+        PortHandler bolt = new PortHandler(persistenceManager);
+        Fields endpointGrouping = new Fields(SwitchHandler.FIELD_ID_SWITCH_ID, SwitchHandler.FIELD_ID_PORT_NUMBER);
+        topology.setBolt(PortHandler.BOLT_ID, bolt, scaleFactor)
+                .fieldsGrouping(SwitchHandler.BOLT_ID, endpointGrouping);
+    }
+
+    private void bfdPortHandler(TopologyBuilder topology, PersistenceManager persistenceManager, int scaleFactor) {
+        BfdPortHandler bolt = new BfdPortHandler(persistenceManager);
+        Fields islGrouping = new Fields(IslHandler.FIELD_ID_ISL_SOURCE, IslHandler.FIELD_ID_ISL_DEST);
+        topology.setBolt(BfdPortHandler.BOLT_ID, bolt, scaleFactor)
+                .fieldsGrouping(IslHandler.BOLT_ID, IslHandler.STREAM_BFD_PORT_ID, islGrouping);
+    }
+
+    private void uniIslHandler(TopologyBuilder topology, PersistenceManager persistenceManager, int scaleFactor) {
+        UniIslHandler bolt = new UniIslHandler(persistenceManager);
+        Fields endpointGrouping = new Fields(PortHandler.FIELD_ID_DATAPATH, PortHandler.FIELD_ID_PORT_NUMBER);
+        topology.setBolt(UniIslHandler.BOLT_ID, bolt, scaleFactor)
+                .fieldsGrouping(PortHandler.BOLT_ID, endpointGrouping);
+    }
+
+    private void islHandler(TopologyBuilder topology, PersistenceManager persistenceManager, int scaleFactor) {
+        IslHandler bolt = new IslHandler(persistenceManager);
+        Fields islGrouping = new Fields(UniIslHandler.FIELD_ID_ISL_SOURCE, UniIslHandler.FIELD_ID_ISL_DEST);
+        topology.setBolt(IslHandler.BOLT_ID, bolt, scaleFactor)
+                .fieldsGrouping(UniIslHandler.BOLT_ID, islGrouping);
     }
 
     private void output(TopologyBuilder topology, int scaleFactor) {

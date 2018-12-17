@@ -17,7 +17,12 @@ package org.openkilda.wfm.topology.discovery.service;
 
 import org.openkilda.messaging.HeartBeat;
 import org.openkilda.messaging.Message;
+import org.openkilda.messaging.info.InfoData;
 import org.openkilda.messaging.info.InfoMessage;
+import org.openkilda.messaging.info.event.IslInfoData;
+import org.openkilda.messaging.info.event.PortInfoData;
+import org.openkilda.messaging.info.event.SwitchInfoData;
+import org.openkilda.model.SwitchId;
 import org.openkilda.wfm.share.utils.WatchDog;
 import org.openkilda.wfm.topology.discovery.bolt.SpeakerMonitor.OutputAdapter;
 import org.openkilda.wfm.topology.discovery.model.OperationMode;
@@ -53,7 +58,7 @@ public class SpeakerMonitorService {
         switch (state) {
             case MAIN:
                 if (!isHeartBeat) {
-                    outputAdapter.proxyCurrentTuple();
+                    proxySpeaker(outputAdapter, message);
                 }
                 break;
 
@@ -114,6 +119,40 @@ public class SpeakerMonitorService {
         outputAdapter.activateMode(OperationMode.UNMANAGED_MODE);
     }
 
+    private void proxySpeaker(OutputAdapter outputAdapter, Message message) {
+        if (message instanceof InfoMessage) {
+            proxySpeaker(outputAdapter, ((InfoMessage) message).getData());
+        } else {
+            reportUnhandledEvent(message.getClass().getCanonicalName(),
+                                 String.format("Invalid message kind: %s", message.getClass()));
+        }
+    }
+
+    private void proxySpeaker(OutputAdapter outputAdapter, InfoData payload) {
+        if (payload instanceof IslInfoData) {
+            proxySpeaker(outputAdapter, (IslInfoData) payload);
+        } else if (payload instanceof SwitchInfoData) {
+            proxySpeaker(outputAdapter, (SwitchInfoData) payload);
+        } else if (payload instanceof PortInfoData) {
+            proxySpeaker(outputAdapter, (PortInfoData) payload);
+        } else {
+            reportUnhandledEvent(payload.getClass().getCanonicalName(),
+                                 String.format("Invalid message payload: %s", payload.getClass()));
+        }
+    }
+
+    private void proxySpeaker(OutputAdapter outputAdapter, IslInfoData payload) {
+        outputAdapter.proxyDiscoveryEvent(payload);
+    }
+
+    private void proxySpeaker(OutputAdapter outputAdapter, SwitchInfoData payload) {
+        outputAdapter.proxySwitchEvent(payload);
+    }
+
+    private void proxySpeaker(OutputAdapter outputAdapter, PortInfoData payload) {
+        outputAdapter.proxyPortEvent(payload);
+    }
+
     private void feedSync(OutputAdapter outputAdapter, Message message) {
         if (message instanceof InfoMessage) {
             syncProcess.input((InfoMessage) message);
@@ -128,8 +167,7 @@ public class SpeakerMonitorService {
     private void completeSync(OutputAdapter outputAdapter) {
         stateTransition(State.MAIN);
 
-        outputAdapter.shareSync(syncProcess.getPayload());
-        outputAdapter.activateMode(OperationMode.MANAGED_MODE);
+        outputAdapter.shareSync(syncProcess.collectResults());
         syncProcess = null;
     }
 
@@ -138,8 +176,12 @@ public class SpeakerMonitorService {
         state = switchTo;
     }
 
-    private void reportUnhandledEvent(String eventDetails) {
-        log.error("State {}: can\'t handle {} event", state, eventDetails);
+    private void reportUnhandledEvent(String event) {
+        log.error("State {}: can\'t handle {} event", state, event);
+    }
+
+    private void reportUnhandledEvent(String event, String details) {
+        log.error("State {}: can\'t handle {} event - {}", state, event, details);
     }
 
     @VisibleForTesting

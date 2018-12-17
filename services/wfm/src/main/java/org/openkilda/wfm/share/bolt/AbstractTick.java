@@ -28,9 +28,9 @@ import java.util.Map;
 
 public abstract class AbstractTick extends AbstractBolt {
     public static final String FIELD_ID_TIME_MILLIS = "time";
-    public static final String FIELD_ID_TICK_NUMBERR = "tick";
+    public static final String FIELD_ID_TICK_NUMBER = "tick";
     public static final Fields STREAM_FIELDS = new Fields(
-            FIELD_ID_TIME_MILLIS, FIELD_ID_TICK_NUMBERR, FIELD_ID_CONTEXT);
+            FIELD_ID_TIME_MILLIS, FIELD_ID_TICK_NUMBER, FIELD_ID_CONTEXT);
 
     private final Integer interval;
     private long tickNumber = 0;

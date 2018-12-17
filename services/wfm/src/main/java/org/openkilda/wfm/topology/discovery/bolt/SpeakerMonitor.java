@@ -17,23 +17,31 @@ package org.openkilda.wfm.topology.discovery.bolt;
 
 import org.openkilda.messaging.Message;
 import org.openkilda.messaging.command.CommandData;
+import org.openkilda.messaging.info.InfoData;
+import org.openkilda.messaging.info.event.IslInfoData;
+import org.openkilda.messaging.info.event.PortInfoData;
+import org.openkilda.messaging.info.event.SwitchInfoData;
+import org.openkilda.messaging.model.SpeakerSwitchView;
+import org.openkilda.model.SwitchId;
 import org.openkilda.wfm.AbstractBolt;
 import org.openkilda.wfm.AbstractOutputAdapter;
 import org.openkilda.wfm.error.AbstractException;
+import org.openkilda.wfm.topology.discovery.model.DiscoveryEventCommand;
 import org.openkilda.wfm.topology.discovery.model.OperationMode;
+import org.openkilda.wfm.topology.discovery.model.PortEventCommand;
+import org.openkilda.wfm.topology.discovery.model.SpeakerSharedSync;
+import org.openkilda.wfm.topology.discovery.model.SpeakerSync;
+import org.openkilda.wfm.topology.discovery.model.SwitchCommand;
+import org.openkilda.wfm.topology.discovery.model.SwitchEventCommand;
 import org.openkilda.wfm.topology.discovery.service.SpeakerMonitorService;
 import org.openkilda.wfm.topology.event.bolt.SpeakerDecoder;
-import org.openkilda.wfm.topology.event.model.Sync;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.storm.task.OutputCollector;
-import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -42,18 +50,20 @@ public class SpeakerMonitor extends AbstractBolt {
 
     public static final String FIELD_ID_INPUT = InputDecoder.FIELD_ID_INPUT;
     public static final String FIELD_ID_SYNC = "sync";
-    public static final String FIELD_ID_MODE = "mode";
+    public static final String FIELD_ID_SWITCH_ID = "switch";
+    public static final String FIELD_ID_REFRESH = "refresh";
 
-    public static final Fields STREAM_FIELDS = new Fields(FIELD_ID_INPUT, FIELD_ID_CONTEXT);
+    public static final Fields STREAM_FIELDS = new Fields(FIELD_ID_SWITCH_ID, FIELD_ID_INPUT, FIELD_ID_CONTEXT);
 
     public static final String STREAM_SPEAKER_ID = "speaker";
     public static final Fields STREAM_SPEAKER_FIELDS = new Fields(SpeakerEncoder.FIELD_ID_PAYLOAD, FIELD_ID_CONTEXT);
 
+    public static final String STREAM_REFRESH_ID = "refresh";
+    public static final Fields STREAM_REFRESH_FIELDS = new Fields(FIELD_ID_SWITCH_ID, FIELD_ID_REFRESH,
+                                                                  FIELD_ID_CONTEXT);
+
     public static final String STREAM_SYNC_ID = "sync";
     public static final Fields STREAM_SYNC_FIELDS = new Fields(FIELD_ID_SYNC, FIELD_ID_CONTEXT);
-
-    public static final String STREAM_MODE_ID = "mode";
-    public static final Fields STREAM_MODE_FIELDS = new Fields(FIELD_ID_MODE, FIELD_ID_CONTEXT);
 
     private final long speakerOutageDelay;
     private final long dumpRequestTimeout;
@@ -82,39 +92,53 @@ public class SpeakerMonitor extends AbstractBolt {
     }
 
     @Override
-    public void prepare(Map stormConf, TopologyContext context, OutputCollector outputManager) {
-        super.prepare(stormConf, context, outputManager);
-
+    protected void init() {
         monitor = new SpeakerMonitorService(speakerOutageDelay, dumpRequestTimeout, System.currentTimeMillis());
     }
 
     @Override
-    public void declareOutputFields(OutputFieldsDeclarer outputManager) {
-        outputManager.declare(STREAM_FIELDS);
-        outputManager.declareStream(STREAM_SPEAKER_ID, STREAM_SPEAKER_FIELDS);
-        outputManager.declareStream(STREAM_SYNC_ID, STREAM_SYNC_FIELDS);
-        outputManager.declareStream(STREAM_MODE_ID, STREAM_MODE_FIELDS);
+    public void declareOutputFields(OutputFieldsDeclarer streamManager) {
+        streamManager.declare(STREAM_FIELDS);
+        streamManager.declareStream(STREAM_SPEAKER_ID, STREAM_SPEAKER_FIELDS);
+        streamManager.declareStream(STREAM_REFRESH_ID, STREAM_REFRESH_FIELDS);
+        streamManager.declareStream(STREAM_SYNC_ID, STREAM_SYNC_FIELDS);
     }
 
-    public static class OutputAdapter extends AbstractOutputAdapter {
-        public OutputAdapter(AbstractBolt owner, Tuple tuple) {
+    private static class OutputAdapter extends AbstractOutputAdapter {
+        OutputAdapter(AbstractBolt owner, Tuple tuple) {
             super(owner, tuple);
         }
 
-        public void proxyCurrentTuple() {
-            emit(tuple.select(STREAM_FIELDS));
+        public void proxyDiscoveryEvent(IslInfoData payload) {
+            // TODO(surabujin): reroute into discovery topology "branch"
+            emit(makeDefaultTuple(new DiscoveryEventCommand(payload)));
+        }
+
+        public void proxySwitchEvent(SwitchInfoData payload) {
+            emit(makeDefaultTuple(new SwitchEventCommand(payload)));
+        }
+
+        public void proxyPortEvent(PortInfoData payload) {
+            emit(makeDefaultTuple(new PortEventCommand(payload)));
         }
 
         public void speakerCommand(CommandData payload) {
             emit(STREAM_SPEAKER_ID, new Values(payload, getContext()));
         }
 
-        public void shareSync(Sync payload) {
-            emit(STREAM_SYNC_ID, new Values(payload, getContext()));
+        public void shareSync(SpeakerSync payload) {
+            for (SpeakerSwitchView entry : payload.getActiveSwitches()) {
+                emit(STREAM_REFRESH_ID, new Values(entry.getDatapath(), entry, getContext()));
+            }
+            emit(STREAM_SYNC_ID, new Values(new SpeakerSharedSync(payload.getKnownSwitches()), getContext()));
         }
 
         public void activateMode(OperationMode mode) {
-            emit(STREAM_MODE_ID, new Values(mode, getContext()));
+            emit(STREAM_SYNC_ID, new Values(new SpeakerSharedSync(mode), getContext()));
+        }
+
+        private Values makeDefaultTuple(SwitchCommand command) {
+            return new Values(command.getDatapath(), command, getContext());
         }
     }
 }
