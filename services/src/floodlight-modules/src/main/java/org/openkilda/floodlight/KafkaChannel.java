@@ -40,10 +40,6 @@ public class KafkaChannel implements IFloodlightModule {
         return config;
     }
 
-    public KafkaTopicsConfig getTopics() {
-        return topics;
-    }
-
     @Override
     public Collection<Class<? extends IFloodlightService>> getModuleServices() {
         return ImmutableList.of(
@@ -77,5 +73,65 @@ public class KafkaChannel implements IFloodlightModule {
         moduleContext.getServiceImpl(KafkaUtilityService.class).setup(moduleContext);
         moduleContext.getServiceImpl(IKafkaProducerService.class).setup(moduleContext);
         moduleContext.getServiceImpl(HeartBeatService.class).setup(moduleContext);
+    }
+
+    public String getRegion() {
+        return config.getFloodlightRegion();
+    }
+
+    public String getSpeakerTopic() {
+        return formatTopicWithRegion(topics.getSpeakerTopic());
+    }
+
+    public String getSpeakerFlowTopic() {
+        return formatTopicWithRegion(topics.getSpeakerFlowTopic());
+    }
+
+    public String getSpeakerFlowPingTopic() {
+        return formatTopicWithRegion(topics.getSpeakerFlowPingTopic());
+    }
+
+    public String getSpeakerDiscoTopic() {
+        return formatTopicWithRegion(topics.getSpeakerDiscoTopic());
+    }
+
+    public String getStatsTopic() {
+        return topics.getStatsTopic();
+    }
+
+    public String getFlowTopic() {
+        return formatTopicWithRegion(topics.getFlowTopic());
+    }
+
+    public String getTopoDiscoTopic() {
+        return formatTopicWithRegion(topics.getTopoDiscoTopic());
+    }
+
+    public String getNorthboundTopic() {
+        return topics.getNorthboundTopic();
+    }
+
+    public String getKafkaNbWorkerTopic() {
+        return topics.getTopoNbTopic();
+    }
+
+    public String getTopoEngTopic() {
+        return formatTopicWithRegion(topics.getTopoEngTopic());
+    }
+
+    public String  getPingTopic() {
+        return topics.getPingTopic();
+    }
+
+    private String formatTopicWithRegion(String topic) {
+        String region =  config.getFloodlightRegion();
+        if (region == null) {
+            return topic;
+        }
+        return String.format("%s_%s", topic, region);
+    }
+
+    public String getTopoNbTopic() {
+        return topics.getTopoNbTopic();
     }
 }

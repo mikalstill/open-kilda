@@ -18,9 +18,7 @@ package org.openkilda.floodlight.service;
 import org.openkilda.floodlight.KafkaChannel;
 import org.openkilda.floodlight.config.UnitConverter;
 import org.openkilda.floodlight.service.kafka.IKafkaProducerService;
-import org.openkilda.floodlight.utils.CorrelationContext;
 import org.openkilda.floodlight.utils.NewCorrelationContextRequired;
-import org.openkilda.messaging.Message;
 
 import net.floodlightcontroller.core.module.FloodlightModuleContext;
 import net.floodlightcontroller.threadpool.IThreadPoolService;
@@ -50,7 +48,7 @@ public class HeartBeatService implements IService {
         scheduler = moduleContext.getServiceImpl(IThreadPoolService.class).getScheduledExecutor();
 
         interval = UnitConverter.timeMillis(owner.getConfig().getHeartBeatInterval());
-        topic = owner.getTopics().getTopoDiscoTopic();
+        topic = owner.getTopoDiscoTopic();
 
         currentTask = scheduler.scheduleAtFixedRate(new Action(this), interval, interval, TimeUnit.MILLISECONDS);
     }
@@ -70,8 +68,6 @@ public class HeartBeatService implements IService {
 
     @NewCorrelationContextRequired
     private void timerAction() {
-        Message message = new org.openkilda.messaging.HeartBeat(System.currentTimeMillis(), CorrelationContext.getId());
-        producerService.sendMessageAndTrack(topic, message);
     }
 
     private static class Action extends TimerTask {

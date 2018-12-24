@@ -44,6 +44,8 @@ import org.openkilda.floodlight.switchmanager.ISwitchManager;
 import org.openkilda.floodlight.switchmanager.SwitchTrackingService;
 import org.openkilda.floodlight.utils.CorrelationContext;
 import org.openkilda.floodlight.utils.CorrelationContext.CorrelationContextClosable;
+import org.openkilda.messaging.AliveRequest;
+import org.openkilda.messaging.AliveResponse;
 import org.openkilda.messaging.Destination;
 import org.openkilda.messaging.command.CommandData;
 import org.openkilda.messaging.command.CommandMessage;
@@ -197,6 +199,8 @@ class RecordHandler implements Runnable {
             doDumpPortDescriptionRequest(message);
         } else if (data instanceof DumpMetersRequest) {
             doDumpMetersRequest(message);
+        } else if (data instanceof AliveRequest) {
+            doAliveRequest(message);
         } else {
             logger.error("Unable to handle '{}' request - handler not found.", data);
         }
@@ -209,6 +213,12 @@ class RecordHandler implements Runnable {
         } else {
             return Destination.WFM_TRANSACTION;
         }
+    }
+
+    private void doAliveRequest(CommandMessage message) {
+        getKafkaProducer().sendMessageAndTrack(context.getKafkaTopoDiscoTopic(),
+                new InfoMessage(new AliveResponse(context.getRegion()), System.currentTimeMillis(),
+                        message.getCorrelationId()));
     }
 
     private void doDiscoverIslCommand(CommandMessage message) {
