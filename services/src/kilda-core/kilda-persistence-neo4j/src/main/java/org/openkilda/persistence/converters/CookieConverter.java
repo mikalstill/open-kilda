@@ -13,27 +13,30 @@
  *   limitations under the License.
  */
 
-package org.openkilda.persistence.repositories;
+package org.openkilda.persistence.converters;
+
+import org.openkilda.model.Cookie;
+
+import org.neo4j.ogm.typeconversion.AttributeConverter;
 
 /**
- * Factory to create {@link Repository} instances.
+ * Converter to convert {@link Cookie} to {@link Long} and back.
  */
-public interface RepositoryFactory {
-    FlowCookieRepository createFlowCookieRepository();
+public class CookieConverter implements AttributeConverter<Cookie, Long> {
 
-    FlowMeterRepository createFlowMeterRepository();
+    @Override
+    public Long toGraphProperty(Cookie value) {
+        if (value == null) {
+            return null;
+        }
+        return value.getValue();
+    }
 
-    FlowPathRepository createFlowPathRepository();
-
-    FlowRepository createFlowRepository();
-
-    IslRepository createIslRepository();
-
-    LinkPropsRepository createLinkPropsRepository();
-
-    SwitchPortRepository createSwitchPortRepository();
-
-    SwitchRepository createSwitchRepository();
-
-    TransitVlanRepository createTransitVlanRepository();
+    @Override
+    public Cookie toEntityAttribute(Long value) {
+        if (value == null) {
+            return null;
+        }
+        return new Cookie(value);
+    }
 }

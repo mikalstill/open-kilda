@@ -13,31 +13,18 @@
  *   limitations under the License.
  */
 
-package org.openkilda.persistence;
+package org.openkilda.persistence.repositories;
 
-import com.sabre.oss.conf4j.annotation.Configuration;
-import com.sabre.oss.conf4j.annotation.Default;
-import com.sabre.oss.conf4j.annotation.Key;
+import org.openkilda.model.Cookie;
+import org.openkilda.model.FlowCookie;
+import org.openkilda.model.PathId;
 
-import java.io.Serializable;
+import java.util.Optional;
 
-@Configuration
-@Key("neo4j")
-public interface Neo4jConfig extends Serializable {
-    @Key("uri")
-    String getUri();
+public interface FlowCookieRepository extends Repository<FlowCookie> {
+    boolean exists(Cookie cookie);
 
-    @Key("user")
-    String getLogin();
+    Optional<FlowCookie> findById(Cookie cookie);
 
-    @Key("password")
-    String getPassword();
-
-    @Key("connection.pool.size")
-    @Default("50")
-    int getConnectionPoolSize();
-
-    @Key("indexes.auto")
-    @Default("update")
-    String getIndexesAuto();
+    Optional<FlowCookie> findByPathId(PathId pathId);
 }

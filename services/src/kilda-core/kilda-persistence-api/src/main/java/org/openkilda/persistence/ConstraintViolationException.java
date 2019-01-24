@@ -15,29 +15,12 @@
 
 package org.openkilda.persistence;
 
-import com.sabre.oss.conf4j.annotation.Configuration;
-import com.sabre.oss.conf4j.annotation.Default;
-import com.sabre.oss.conf4j.annotation.Key;
+public class ConstraintViolationException extends PersistenceException {
+    public ConstraintViolationException(String message) {
+        super(message);
+    }
 
-import java.io.Serializable;
-
-@Configuration
-@Key("neo4j")
-public interface Neo4jConfig extends Serializable {
-    @Key("uri")
-    String getUri();
-
-    @Key("user")
-    String getLogin();
-
-    @Key("password")
-    String getPassword();
-
-    @Key("connection.pool.size")
-    @Default("50")
-    int getConnectionPoolSize();
-
-    @Key("indexes.auto")
-    @Default("update")
-    String getIndexesAuto();
+    public ConstraintViolationException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

@@ -19,6 +19,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
@@ -28,71 +29,46 @@ import org.neo4j.ogm.annotation.Index;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Property;
 import org.neo4j.ogm.annotation.typeconversion.Convert;
-import org.neo4j.ogm.typeconversion.InstantStringConverter;
 
 import java.io.Serializable;
-import java.time.Instant;
 
 /**
- * Represents a switch.
+ * Represents a cookie allocated for a flow path.
  */
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(exclude = {"entityId"})
-@NodeEntity(label = "switch")
-public class Switch implements Serializable {
+@NodeEntity(label = "flow_cookie")
+public class FlowCookie implements Serializable {
     private static final long serialVersionUID = 1L;
 
     // Hidden as needed for OGM only.
     @Id
     @GeneratedValue
     @Setter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE)
     private Long entityId;
 
     @NonNull
-    @Property(name = "name")
-    @Convert(graphPropertyType = String.class)
+    @Property(name = "path_id")
     @Index(unique = true)
-    private SwitchId switchId;
-
-    @NonNull
-    @Property(name = "state")
-    // Enforce usage of custom converters.
     @Convert(graphPropertyType = String.class)
-    private SwitchStatus status;
+    private PathId pathId;
 
     @NonNull
-    private String address;
+    @Property(name = "flow_id")
+    private String flowId;
 
     @NonNull
-    private String hostname;
-
-    @NonNull
-    private String controller;
-
-    private String description;
-
-    @NonNull
-    @Property(name = "time_create")
-    @Convert(InstantStringConverter.class)
-    private Instant timeCreate;
-
-    @NonNull
-    @Property(name = "time_modify")
-    @Convert(InstantStringConverter.class)
-    private Instant timeModify;
+    @Property(name = "cookie")
+    @Index(unique = true)
+    @Convert(graphPropertyType = Long.class)
+    private Cookie cookie;
 
     @Builder(toBuilder = true)
-    public Switch(@NonNull SwitchId switchId, @NonNull SwitchStatus status, @NonNull String address,
-                  @NonNull String hostname, @NonNull String controller, String description,
-                  @NonNull Instant timeCreate, @NonNull Instant timeModify) {
-        this.switchId = switchId;
-        this.status = status;
-        this.address = address;
-        this.hostname = hostname;
-        this.controller = controller;
-        this.description = description;
-        this.timeCreate = timeCreate;
-        this.timeModify = timeModify;
+    public FlowCookie(@NonNull PathId pathId, @NonNull String flowId, Cookie cookie) {
+        this.pathId = pathId;
+        this.flowId = flowId;
+        this.cookie = cookie;
     }
 }

@@ -27,6 +27,7 @@ import lombok.NonNull;
 import lombok.Setter;
 import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
+import org.neo4j.ogm.annotation.Index;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Property;
 import org.neo4j.ogm.annotation.Relationship;
@@ -35,13 +36,13 @@ import org.neo4j.ogm.annotation.typeconversion.Convert;
 import java.io.Serializable;
 
 /**
- * Port entity.
+ * Represents a meter allocated for a flow path.
  */
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(exclude = {"entityId", "uniqueIndex"})
-@NodeEntity(label = "port")
-public class Port implements Serializable {
+@NodeEntity(label = "flow_meter")
+public class FlowMeter implements Serializable {
     private static final long serialVersionUID = 1L;
 
     // Hidden as needed for OGM only.
@@ -58,15 +59,24 @@ public class Port implements Serializable {
     @Convert(graphPropertyType = String.class)
     private SwitchId switchId;
 
-    @Property(name = "port_no")
-    private int portNo;
+    @NonNull
+    @Property(name = "meter_id")
+    @Convert(graphPropertyType = Long.class)
+    private MeterId meterId;
 
     @NonNull
     @Relationship(type = "owned_by")
     private Switch theSwitch;
 
+    @NonNull
+    @Property(name = "path_id")
+    @Index(unique = true)
     @Convert(graphPropertyType = String.class)
-    private PortStatus status;
+    private PathId pathId;
+
+    @NonNull
+    @Property(name = "flow_id")
+    private String flowId;
 
     // Hidden as used to imitate unique composite index for non-enterprise Neo4j versions.
     @Setter(AccessLevel.NONE)
@@ -75,18 +85,20 @@ public class Port implements Serializable {
     private String uniqueIndex;
 
     @Builder(toBuilder = true)
-    public Port(int portNo, PortStatus status, @NonNull Switch theSwitch) {
-        this.portNo = portNo;
-        this.status = status;
-
+    public FlowMeter(@NonNull MeterId meterId, @NonNull Switch theSwitch,
+                     @NonNull PathId pathId, @NonNull String flowId) {
+        this.meterId = meterId;
+        this.theSwitch = theSwitch;
+        this.pathId = pathId;
+        this.flowId = flowId;
         setTheSwitch(theSwitch);
     }
 
     /**
-     * Set the port and update related index(es).
+     * Set the meter and update related index(es).
      */
-    public void setPortNo(int portNo) {
-        this.portNo = portNo;
+    public void setMeterId(@NonNull MeterId meterId) {
+        this.meterId = meterId;
         calculateUniqueIndex();
     }
 
@@ -100,6 +112,6 @@ public class Port implements Serializable {
     }
 
     private void calculateUniqueIndex() {
-        uniqueIndex = format("%s_%d", switchId, portNo);
+        uniqueIndex = format("%s_%d", switchId, meterId != null ? meterId.getValue() : null);
     }
 }

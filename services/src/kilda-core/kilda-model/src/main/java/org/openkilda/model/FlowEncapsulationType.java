@@ -13,31 +13,12 @@
  *   limitations under the License.
  */
 
-package org.openkilda.persistence;
+package org.openkilda.model;
 
-import com.sabre.oss.conf4j.annotation.Configuration;
-import com.sabre.oss.conf4j.annotation.Default;
-import com.sabre.oss.conf4j.annotation.Key;
-
-import java.io.Serializable;
-
-@Configuration
-@Key("neo4j")
-public interface Neo4jConfig extends Serializable {
-    @Key("uri")
-    String getUri();
-
-    @Key("user")
-    String getLogin();
-
-    @Key("password")
-    String getPassword();
-
-    @Key("connection.pool.size")
-    @Default("50")
-    int getConnectionPoolSize();
-
-    @Key("indexes.auto")
-    @Default("update")
-    String getIndexesAuto();
+/**
+ * Represents flow encapsulation types.
+ */
+public enum FlowEncapsulationType {
+    TRANSIT_VLAN
 }
+

@@ -1,4 +1,4 @@
-/* Copyright 2018 Telstra Open Source
+/* Copyright 2017 Telstra Open Source
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -13,31 +13,20 @@
  *   limitations under the License.
  */
 
-package org.openkilda.persistence;
+package org.openkilda.model;
 
-import com.sabre.oss.conf4j.annotation.Configuration;
-import com.sabre.oss.conf4j.annotation.Default;
-import com.sabre.oss.conf4j.annotation.Key;
+import lombok.NonNull;
+import lombok.Value;
 
 import java.io.Serializable;
 
-@Configuration
-@Key("neo4j")
-public interface Neo4jConfig extends Serializable {
-    @Key("uri")
-    String getUri();
+/**
+ * Represents a flow path id.
+ */
+@Value
+public class PathId implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-    @Key("user")
-    String getLogin();
-
-    @Key("password")
-    String getPassword();
-
-    @Key("connection.pool.size")
-    @Default("50")
-    int getConnectionPoolSize();
-
-    @Key("indexes.auto")
-    @Default("update")
-    String getIndexesAuto();
+    @NonNull
+    private final String pathId;
 }

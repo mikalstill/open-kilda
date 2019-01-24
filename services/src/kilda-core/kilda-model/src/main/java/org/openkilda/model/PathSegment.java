@@ -19,80 +19,69 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
+import org.neo4j.ogm.annotation.EndNode;
 import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.Index;
-import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Property;
+import org.neo4j.ogm.annotation.RelationshipEntity;
+import org.neo4j.ogm.annotation.StartNode;
 import org.neo4j.ogm.annotation.typeconversion.Convert;
-import org.neo4j.ogm.typeconversion.InstantStringConverter;
 
 import java.io.Serializable;
-import java.time.Instant;
 
 /**
- * Represents a switch.
+ * Represents a segment of a flow path.
  */
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(exclude = {"entityId"})
-@NodeEntity(label = "switch")
-public class Switch implements Serializable {
+@RelationshipEntity(type = "path_segment")
+public class PathSegment implements Serializable {
     private static final long serialVersionUID = 1L;
 
     // Hidden as needed for OGM only.
     @Id
     @GeneratedValue
     @Setter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE)
     private Long entityId;
 
     @NonNull
-    @Property(name = "name")
+    @Property(name = "path_id")
+    @Index
     @Convert(graphPropertyType = String.class)
-    @Index(unique = true)
-    private SwitchId switchId;
+    private PathId pathId;
 
     @NonNull
-    @Property(name = "state")
-    // Enforce usage of custom converters.
-    @Convert(graphPropertyType = String.class)
-    private SwitchStatus status;
+    @StartNode
+    private Switch srcSwitch;
 
     @NonNull
-    private String address;
+    @EndNode
+    private Switch destSwitch;
 
-    @NonNull
-    private String hostname;
+    @Property(name = "src_port")
+    private int srcPort;
 
-    @NonNull
-    private String controller;
+    @Property(name = "dst_port")
+    private int destPort;
 
-    private String description;
-
-    @NonNull
-    @Property(name = "time_create")
-    @Convert(InstantStringConverter.class)
-    private Instant timeCreate;
-
-    @NonNull
-    @Property(name = "time_modify")
-    @Convert(InstantStringConverter.class)
-    private Instant timeModify;
+    @Property(name = "segment_latency")
+    private Long latency;
 
     @Builder(toBuilder = true)
-    public Switch(@NonNull SwitchId switchId, @NonNull SwitchStatus status, @NonNull String address,
-                  @NonNull String hostname, @NonNull String controller, String description,
-                  @NonNull Instant timeCreate, @NonNull Instant timeModify) {
-        this.switchId = switchId;
-        this.status = status;
-        this.address = address;
-        this.hostname = hostname;
-        this.controller = controller;
-        this.description = description;
-        this.timeCreate = timeCreate;
-        this.timeModify = timeModify;
+    public PathSegment(@NonNull PathId pathId, @NonNull Switch srcSwitch, @NonNull Switch destSwitch,
+                       int srcPort, int destPort, Long latency) {
+        this.pathId = pathId;
+        this.srcSwitch = srcSwitch;
+        this.destSwitch = destSwitch;
+        this.srcPort = srcPort;
+        this.destPort = destPort;
+        this.latency = latency;
     }
 }

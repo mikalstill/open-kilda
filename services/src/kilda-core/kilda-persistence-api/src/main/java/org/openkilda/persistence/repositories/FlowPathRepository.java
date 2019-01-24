@@ -15,27 +15,25 @@
 
 package org.openkilda.persistence.repositories;
 
-import org.openkilda.model.Flow;
+import org.openkilda.model.Cookie;
+import org.openkilda.model.FlowPath;
+import org.openkilda.model.PathId;
+import org.openkilda.model.PathSegment;
 import org.openkilda.model.SwitchId;
 
 import java.util.Collection;
 import java.util.Optional;
 
-public interface FlowRepository extends Repository<Flow> {
-    boolean exists(String flowId);
+public interface FlowPathRepository extends Repository<FlowPath> {
+    Optional<FlowPath> findById(PathId pathId);
 
-    Optional<Flow> findById(String flowId);
+    Optional<FlowPath> findByFlowIdAndCookie(String flowId, Cookie flowCookie);
 
-    Collection<Flow> findWithPeriodicPingsEnabled();
+    Collection<FlowPath> findByFlowId(String flowId);
 
-    Collection<Flow> findByEndpoint(SwitchId switchId, int port);
+    Collection<PathSegment> findPathSegmentsByDestSwitchId(SwitchId switchId);
 
-    Collection<String> findActiveFlowIdsWithPortInPath(SwitchId switchId, int port);
+    void createOrUpdate(PathSegment segment);
 
-    Collection<String> findDownFlowIds();
-
-    Collection<Flow> findBySrcSwitchId(SwitchId switchId);
-
-    Collection<Flow> findWithPathSegment(SwitchId srcSwitchId, int srcPort,
-                                                     SwitchId dstSwitchId, int dstPort);
+    long getUsedBandwidthBetweenEndpoints(SwitchId srcSwitchId, int srcPort, SwitchId dstSwitchId, int dstPort);
 }

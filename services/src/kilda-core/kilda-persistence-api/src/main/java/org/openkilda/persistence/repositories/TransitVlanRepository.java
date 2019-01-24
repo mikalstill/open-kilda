@@ -13,31 +13,17 @@
  *   limitations under the License.
  */
 
-package org.openkilda.persistence;
+package org.openkilda.persistence.repositories;
 
-import com.sabre.oss.conf4j.annotation.Configuration;
-import com.sabre.oss.conf4j.annotation.Default;
-import com.sabre.oss.conf4j.annotation.Key;
+import org.openkilda.model.PathId;
+import org.openkilda.model.TransitVlan;
 
-import java.io.Serializable;
+import java.util.Optional;
 
-@Configuration
-@Key("neo4j")
-public interface Neo4jConfig extends Serializable {
-    @Key("uri")
-    String getUri();
+public interface TransitVlanRepository extends Repository<TransitVlan> {
+    boolean exists(int vlan);
 
-    @Key("user")
-    String getLogin();
+    Optional<TransitVlan> findById(int vlan);
 
-    @Key("password")
-    String getPassword();
-
-    @Key("connection.pool.size")
-    @Default("50")
-    int getConnectionPoolSize();
-
-    @Key("indexes.auto")
-    @Default("update")
-    String getIndexesAuto();
+    Optional<TransitVlan> findByPathId(PathId pathId);
 }

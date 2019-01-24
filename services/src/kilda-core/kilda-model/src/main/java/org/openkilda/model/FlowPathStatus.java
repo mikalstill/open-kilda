@@ -13,31 +13,26 @@
  *   limitations under the License.
  */
 
-package org.openkilda.persistence;
+package org.openkilda.model;
 
-import com.sabre.oss.conf4j.annotation.Configuration;
-import com.sabre.oss.conf4j.annotation.Default;
-import com.sabre.oss.conf4j.annotation.Key;
+/**
+ * Represents flow path statuses.
+ */
+public enum FlowPathStatus {
 
-import java.io.Serializable;
+    /**
+     * Flow is in creating/deleting state.
+     */
+    IN_PROGRESS,
 
-@Configuration
-@Key("neo4j")
-public interface Neo4jConfig extends Serializable {
-    @Key("uri")
-    String getUri();
+    /**
+     * Flow over the path is in UP state.
+     */
+    UP,
 
-    @Key("user")
-    String getLogin();
-
-    @Key("password")
-    String getPassword();
-
-    @Key("connection.pool.size")
-    @Default("50")
-    int getConnectionPoolSize();
-
-    @Key("indexes.auto")
-    @Default("update")
-    String getIndexesAuto();
+    /**
+     * Flow over the path is in down state.
+     */
+    DOWN
 }
+
