@@ -199,14 +199,16 @@ public class OfeLinkBoltTest extends AbstractStormTest {
         bolt.state = State.MAIN;
 
         PortInfoData portInfoData = new PortInfoData(switchId, port, PortChangeType.DOWN);
-        InfoMessage inputMessage = new InfoMessage(portInfoData, 0, DEFAULT_CORRELATION_ID, Destination.WFM);
+        InfoMessage inputMessage = new InfoMessage(portInfoData, 0, DEFAULT_CORRELATION_ID, Destination.WFM,
+                null);
         Tuple tuple = new TupleImpl(context, new Values(objectMapper.writeValueAsString(inputMessage)),
                 TASK_ID_BOLT, STREAM_ID_INPUT);
         bolt.doWork(tuple);
 
 
         PortInfoData updatedData = new PortInfoData(switchId, port - config.getBfdPortOffset(), PortChangeType.DOWN);
-        InfoMessage outputMessage = new InfoMessage(updatedData, 0, DEFAULT_CORRELATION_ID, Destination.WFM);
+        InfoMessage outputMessage = new InfoMessage(updatedData, 0, DEFAULT_CORRELATION_ID, Destination.WFM,
+                null);
 
         Mockito.verify(outputDelegate).ack(tuple);
         Mockito.verify(outputDelegate).emit(eq(NETWORK_TOPOLOGY_CHANGE_STREAM),
@@ -227,12 +229,12 @@ public class OfeLinkBoltTest extends AbstractStormTest {
         switchPorts.add(new SwitchPort(BFD_OFFSET + 3, SwitchPort.State.UP));
         Switch switchRecord = new Switch(switchId, ipAddress, new HashSet<>(), switchPorts);
         NetworkDumpSwitchData data = new NetworkDumpSwitchData(switchRecord);
-        InfoMessage inputMessage = new InfoMessage(data, 0, DEFAULT_CORRELATION_ID, Destination.WFM);
+        InfoMessage inputMessage = new InfoMessage(data, 0, DEFAULT_CORRELATION_ID, Destination.WFM, null);
         Tuple tuple = new TupleImpl(context, new Values(objectMapper.writeValueAsString(inputMessage)),
                 TASK_ID_BOLT, STREAM_ID_INPUT);
         bolt.discovery = Mockito.mock(DiscoveryManager.class);
         ArgumentCaptor<Switch> switchCaptor = ArgumentCaptor.forClass(Switch.class);
-        bolt.dispatchSyncInProgress(tuple, inputMessage);
+        bolt.dispatch(tuple, inputMessage);
         Mockito.verify(bolt.discovery, Mockito.times(1)).registerSwitch(switchCaptor.capture());
 
         assertEquals(2, switchCaptor.getValue().getPorts().size());
@@ -260,7 +262,7 @@ public class OfeLinkBoltTest extends AbstractStormTest {
                 TASK_ID_BOLT, STREAM_ID_INPUT);
         bolt.discovery = Mockito.mock(DiscoveryManager.class);
         ArgumentCaptor<Switch> switchCaptor = ArgumentCaptor.forClass(Switch.class);
-        bolt.dispatchMain(tuple, inputMessage);
+        bolt.dispatch(tuple, inputMessage);
         Mockito.verify(bolt.discovery, Mockito.times(1)).registerSwitch(switchCaptor.capture());
 
         assertEquals(2, switchCaptor.getValue().getPorts().size());

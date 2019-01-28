@@ -31,9 +31,6 @@ import org.openkilda.messaging.ctrl.state.OFELinkBoltState;
 import org.openkilda.messaging.info.InfoData;
 import org.openkilda.messaging.info.InfoMessage;
 import org.openkilda.messaging.info.discovery.DiscoPacketSendingConfirmation;
-import org.openkilda.messaging.info.discovery.NetworkDumpBeginMarker;
-import org.openkilda.messaging.info.discovery.NetworkDumpEndMarker;
-import org.openkilda.messaging.info.discovery.NetworkDumpSwitchData;
 import org.openkilda.messaging.info.event.IslChangeType;
 import org.openkilda.messaging.info.event.IslInfoData;
 import org.openkilda.messaging.info.event.PathNode;
@@ -47,7 +44,6 @@ import org.openkilda.messaging.model.Switch;
 import org.openkilda.messaging.model.SwitchPort;
 import org.openkilda.model.SwitchId;
 import org.openkilda.wfm.OfeMessageUtils;
-import org.openkilda.wfm.WatchDog;
 import org.openkilda.wfm.ctrl.CtrlAction;
 import org.openkilda.wfm.ctrl.ICtrlBolt;
 import org.openkilda.wfm.isl.DiscoveryManager;
@@ -61,7 +57,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import org.apache.storm.kafka.bolt.mapper.FieldNameBasedTupleToKafkaMapper;
-import org.apache.storm.kafka.spout.internal.Timer;
 import org.apache.storm.state.InMemoryKeyValueState;
 import org.apache.storm.state.KeyValueState;
 import org.apache.storm.task.OutputCollector;
@@ -78,7 +73,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -119,8 +113,6 @@ public class OfeLinkBolt
     private final int islHealthFailureLimit;
     private final int islKeepRemovedTimeout;
     private final int bfdPortOffset;
-    private final float watchDogInterval;
-    private WatchDog watchDog;
     private TopologyContext context;
     private OutputCollector collector;
 
@@ -129,11 +121,9 @@ public class OfeLinkBolt
     DiscoveryManager discovery;
     private Map<SwitchId, Set<DiscoveryLink>> linksBySwitch;
 
-    private String dumpRequestCorrelationId = null;
     private float dumpRequestTimeout;
-    private Timer dumpRequestTimer;
     @VisibleForTesting
-    State state = State.NEED_SYNC;
+    State state = State.MAIN;
 
     /**
      * Default constructor .. default health check frequency
@@ -151,7 +141,6 @@ public class OfeLinkBolt
         islHealthFailureLimit = discoveryConfig.getDiscoveryLimit();
         islKeepRemovedTimeout = discoveryConfig.getKeepRemovedIslTimeout();
 
-        watchDogInterval = discoveryConfig.getDiscoverySpeakerFailureTimeout();
         dumpRequestTimeout = discoveryConfig.getDiscoveryDumpRequestTimeout();
 
         islDiscoveryTopic = config.getKafkaSpeakerDiscoTopic();
@@ -169,7 +158,6 @@ public class OfeLinkBolt
     @Override
     @SuppressWarnings("unchecked")
     public void initState(KeyValueState<String, Object> state) {
-        watchDog = new WatchDog(watchDogInterval);
 
         // NB: First time the worker is created this will be null
         // TODO: what happens to state as workers go up or down
@@ -194,44 +182,8 @@ public class OfeLinkBolt
      */
     @Override
     protected void doTick(Tuple tuple) {
-        boolean isSpeakerAvailable = watchDog.isAvailable();
-
-        if (!isSpeakerAvailable) {
-            stateTransition(State.OFFLINE);
-        }
-
         String correlationId = UUID.randomUUID().toString();
-
-        switch (state) {
-            case NEED_SYNC:
-                dumpRequestCorrelationId = correlationId;
-                sendNetworkRequest(tuple, correlationId);
-                enableDumpRequestTimer();
-                stateTransition(State.WAIT_SYNC);
-                break;
-
-            case WAIT_SYNC:
-            case SYNC_IN_PROGRESS:
-                if (dumpRequestTimer.isExpiredResetOnTrue()) {
-                    logger.error("Did not get network dump, send one more dump request");
-                    dumpRequestCorrelationId = correlationId;
-                    sendNetworkRequest(tuple, correlationId);
-                }
-                break;
-
-            case OFFLINE:
-                if (isSpeakerAvailable) {
-                    logger.info("Switch into ONLINE mode");
-                    stateTransition(State.NEED_SYNC);
-                }
-                break;
-
-            case MAIN:
-                processDiscoveryPlan(tuple, correlationId);
-                break;
-            default:
-                logger.error("Illegal state of OfeLinkBolt: {}", state);
-        }
+        processDiscoveryPlan(tuple, correlationId);
     }
 
     /**
@@ -313,7 +265,6 @@ public class OfeLinkBolt
         BaseMessage message;
         try {
             message = MAPPER.readValue(json, BaseMessage.class);
-            watchDog.reset();
         } catch (IOException e) {
             collector.ack(tuple);
             logger.error("Unknown Message type={}", json);
@@ -334,50 +285,6 @@ public class OfeLinkBolt
         }
     }
 
-    private void dispatch(Tuple tuple, InfoMessage infoMessage) {
-        switch (state) {
-            case NEED_SYNC:
-                dispatchNeedSync(tuple, infoMessage);
-                break;
-            case WAIT_SYNC:
-                dispatchWaitSync(tuple, infoMessage);
-                break;
-            case SYNC_IN_PROGRESS:
-                dispatchSyncInProgress(tuple, infoMessage);
-                break;
-            case OFFLINE:
-                dispatchOffline(tuple, infoMessage);
-                break;
-            case MAIN:
-                dispatchMain(tuple, infoMessage);
-                break;
-            default:
-                reportInvalidEvent(infoMessage.getData());
-        }
-    }
-
-    private void dispatchNeedSync(Tuple tuple, InfoMessage infoMessage) {
-        logger.warn("Bolt internal state is out of sync with FL, skip tuple");
-    }
-
-    private void dispatchWaitSync(Tuple tuple, InfoMessage infoMessage) {
-        InfoData data = infoMessage.getData();
-        if (data instanceof NetworkDumpBeginMarker) {
-            if (dumpRequestCorrelationId.equals(infoMessage.getCorrelationId())) {
-                logger.info("Got response on network sync request, start processing network events");
-                enableDumpRequestTimer();
-                stateTransition(State.SYNC_IN_PROGRESS);
-            } else {
-                logger.warn(
-                        "Got response on network sync request with invalid "
-                                + "correlation-id(expect: \"{}\", got: \"{}\")",
-                        dumpRequestCorrelationId, infoMessage.getCorrelationId());
-            }
-        } else {
-            reportInvalidEvent(data);
-        }
-    }
-
     private Switch cleanUpLogicalPorts(Switch originalSwitch) {
         if (originalSwitch == null) {
             return null;
@@ -390,31 +297,7 @@ public class OfeLinkBolt
     }
 
     @VisibleForTesting
-    void dispatchSyncInProgress(Tuple tuple, InfoMessage infoMessage) {
-        InfoData data = infoMessage.getData();
-        if (data instanceof NetworkDumpSwitchData) {
-            NetworkDumpSwitchData networkDumpSwitchData = (NetworkDumpSwitchData) data;
-            Switch switchWithNoBfdPorts = cleanUpLogicalPorts(networkDumpSwitchData.getSwitchRecord());
-            logger.info("Event/WFM Sync: switch {}", data);
-            discovery.registerSwitch(switchWithNoBfdPorts);
-
-        } else if (data instanceof NetworkDumpEndMarker) {
-            logger.info("End of network sync stream received");
-            stateTransition(State.MAIN);
-
-        } else {
-            reportInvalidEvent(data);
-        }
-    }
-
-    private void dispatchOffline(Tuple tuple, InfoMessage infoMessage) {
-        logger.warn("Got input while in offline mode, it mean the possibility to try sync state");
-        watchDog.reset();
-        stateTransition(State.NEED_SYNC);
-    }
-
-    @VisibleForTesting
-    protected void dispatchMain(Tuple tuple, InfoMessage infoMessage) {
+    protected void dispatch(Tuple tuple, InfoMessage infoMessage) {
         InfoData data = infoMessage.getData();
         if (data instanceof SwitchInfoData) {
             SwitchInfoData switchData = (SwitchInfoData) infoMessage.getData();
@@ -580,11 +463,6 @@ public class OfeLinkBolt
     private boolean isPortUpOrCached(String state) {
         return OfeMessageUtils.PORT_UP.equals(state) || OfeMessageUtils.PORT_ADD.equals(state)
                 || PortChangeType.CACHED.getType().equals(state);
-    }
-
-    private void enableDumpRequestTimer() {
-        long expireDelay = (int) (dumpRequestTimeout * 1000);
-        dumpRequestTimer = new Timer(expireDelay, expireDelay, TimeUnit.MILLISECONDS);
     }
 
     private void handleMovedIsl(Tuple tuple, SwitchId srcSwitch, int srcPort, SwitchId dstSwitch, int dstPort,
