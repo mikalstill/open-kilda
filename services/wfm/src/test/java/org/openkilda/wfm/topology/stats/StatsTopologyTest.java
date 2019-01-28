@@ -129,7 +129,7 @@ public class StatsTopologyTest extends StableAbstractStormTest {
                     baseCount + 8, baseCount + 9, baseCount + 10, baseCount + 11);
         }).collect(toList());
         InfoMessage message = new InfoMessage(new PortStatsData(switchId, entries), timestamp, CORRELATION_ID,
-                Destination.WFM_STATS);
+                Destination.WFM_STATS, null);
 
         //mock kafka spout
         MockedSources sources = new MockedSources();
@@ -195,7 +195,7 @@ public class StatsTopologyTest extends StableAbstractStormTest {
         final List<MeterConfigReply> stats =
                 Collections.singletonList(new MeterConfigReply(2, Arrays.asList(1L, 2L, 3L)));
         InfoMessage message = new InfoMessage(new MeterConfigStatsData(switchId, stats), timestamp, CORRELATION_ID,
-                Destination.WFM_STATS);
+                Destination.WFM_STATS, null);
 
         //mock kafka spout
         MockedSources sources = new MockedSources();
@@ -260,7 +260,7 @@ public class StatsTopologyTest extends StableAbstractStormTest {
         int packetCount = 6;
         MeterStatsEntry entry = new MeterStatsEntry(meterId, byteCount, packetCount);
         MeterStatsData data = new MeterStatsData(switchId, Collections.singletonList(entry));
-        InfoMessage message = new InfoMessage(data, timestamp, CORRELATION_ID, Destination.WFM_STATS);
+        InfoMessage message = new InfoMessage(data, timestamp, CORRELATION_ID, Destination.WFM_STATS, null);
 
         //mock kafka spout
         MockedSources sources = new MockedSources();
@@ -312,7 +312,7 @@ public class StatsTopologyTest extends StableAbstractStormTest {
         // Stats for system rule must NOT be processes by FlowMetricGenBolt
         List<FlowStatsEntry> entries = Lists.newArrayList(flowStats, systemRuleStats);
         InfoMessage message = new InfoMessage(new FlowStatsData(switchId, entries),
-                timestamp, CORRELATION_ID, Destination.WFM_STATS);
+                timestamp, CORRELATION_ID, Destination.WFM_STATS, null);
 
         sources.addMockData(StatsComponentType.STATS_OFS_KAFKA_SPOUT.toString(),
                 new Values(MAPPER.writeValueAsString(message)));
@@ -370,7 +370,7 @@ public class StatsTopologyTest extends StableAbstractStormTest {
         // Stats for flow must NOT be processes by SystemRuleMetricGenBolt
         List<FlowStatsEntry> entries = Lists.newArrayList(flowStats, systemRuleStats);
         InfoMessage message = new InfoMessage(new FlowStatsData(switchId, entries),
-                timestamp, CORRELATION_ID, Destination.WFM_STATS);
+                timestamp, CORRELATION_ID, Destination.WFM_STATS, null);
 
         sources.addMockData(StatsComponentType.STATS_OFS_KAFKA_SPOUT.toString(),
                 new Values(MAPPER.writeValueAsString(message)));
