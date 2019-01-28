@@ -4,9 +4,11 @@ import static org.openkilda.testing.Constants.HEARTBEAT_INTERVAL
 
 import org.openkilda.functionaltests.BaseSpecification
 import org.openkilda.functionaltests.helpers.Wrappers
+import org.openkilda.messaging.AliveResponse
 import org.openkilda.messaging.HeartBeat
 import org.openkilda.messaging.Message
 import org.openkilda.messaging.ctrl.KafkaBreakTarget
+import org.openkilda.messaging.info.InfoMessage
 import org.openkilda.messaging.info.event.IslChangeType
 import org.openkilda.testing.service.kafka.KafkaBreaker
 
@@ -60,14 +62,17 @@ class FloodlightKafkaConnectionSpec extends BaseSpecification {
     def "Floodlight emits heartbeat messages to notify about its availability"() {
         setup: "Create kafka consumer and seek to the end"
         def consumer = new KafkaConsumer<String, String>(consumerProps)
-        consumer.subscribe([topoDiscoTopic]);
+        consumer.subscribe([topoDiscoTopic + "_1"]);
         consumer.poll(0)
         consumer.seekToEnd([]);
         consumer.poll(0)
 
         expect: "At least 1 heartbeat in #heartbeatInterval seconds"
+        //TODO: search for AliveResponse here
         Wrappers.wait(heartbeatInterval, 0) {
-            assert consumer.poll(100).find { it.value().to(Message) instanceof HeartBeat }
+            assert consumer.poll(100).find {
+                it.value().to(Message) instanceof InfoMessage && it.value().to(InfoMessage).getData() instanceof AliveResponse
+            }
         }
 
         cleanup:
