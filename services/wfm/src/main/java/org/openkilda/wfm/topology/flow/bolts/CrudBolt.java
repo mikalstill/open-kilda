@@ -43,6 +43,7 @@ import org.openkilda.messaging.info.event.PathInfoData;
 import org.openkilda.messaging.info.flow.FlowCacheSyncResponse;
 import org.openkilda.messaging.info.flow.FlowInfoData;
 import org.openkilda.messaging.info.flow.FlowOperation;
+import org.openkilda.messaging.info.flow.FlowPathResponse;
 import org.openkilda.messaging.info.flow.FlowReadResponse;
 import org.openkilda.messaging.info.flow.FlowRerouteResponse;
 import org.openkilda.messaging.info.flow.FlowResponse;
@@ -51,6 +52,7 @@ import org.openkilda.messaging.model.BidirectionalFlowDto;
 import org.openkilda.messaging.model.FlowDto;
 import org.openkilda.messaging.payload.flow.FlowIdStatusPayload;
 import org.openkilda.messaging.payload.flow.FlowState;
+import org.openkilda.messaging.payload.flow.GroupFlowPathPayload;
 import org.openkilda.model.Flow;
 import org.openkilda.model.FlowPair;
 import org.openkilda.model.FlowSegment;
@@ -237,6 +239,9 @@ public class CrudBolt
                             break;
                         case CACHE_SYNC:
                             handleCacheSyncRequest(cmsg, tuple);
+                            break;
+                        case PATH:
+                            handlePathRequest(flowId, cmsg, tuple);
                             break;
                         case READ:
                             handleReadRequest(flowId, cmsg, tuple);
@@ -531,6 +536,29 @@ public class CrudBolt
         Values values = new Values(new InfoMessage(new FlowReadResponse(flow),
                 message.getTimestamp(), message.getCorrelationId(), Destination.NORTHBOUND));
         outputCollector.emit(StreamType.RESPONSE.toString(), tuple, values);
+    }
+
+    private void handlePathRequest(String flowId, CommandMessage message, Tuple tuple) {
+        final String errorType = "Could not get flow path";
+        String requestId = message.getCorrelationId();
+
+        try {
+            List<GroupFlowPathPayload> pathPayloads = flowService.getFlowPath(flowId);
+
+            int i = 0;
+            for (GroupFlowPathPayload pathPayload : pathPayloads) {
+                Message response = new ChunkedInfoMessage(new FlowPathResponse(pathPayload), System.currentTimeMillis(),
+                        requestId, i++, pathPayloads.size());
+
+                outputCollector.emit(StreamType.RESPONSE.toString(), tuple, new Values(response));
+            }
+        } catch (FlowNotFoundException e) {
+            throw new MessageException(message.getCorrelationId(), System.currentTimeMillis(),
+                    ErrorType.NOT_FOUND, errorType, e.getMessage());
+        } catch (Exception e) {
+            throw new MessageException(message.getCorrelationId(), System.currentTimeMillis(),
+                    ErrorType.INTERNAL_ERROR, errorType, e.getMessage());
+        }
     }
 
     /**
