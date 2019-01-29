@@ -22,11 +22,11 @@ import org.openkilda.messaging.payload.flow.FlowEndpointPayload
 import org.openkilda.messaging.payload.flow.FlowPayload
 import org.openkilda.messaging.payload.flow.FlowState
 import org.openkilda.model.Cookie
-import org.openkilda.model.SwitchId
 import org.openkilda.northbound.dto.flows.PingInput
 import org.openkilda.testing.model.topology.TopologyDefinition.Switch
 
 import org.springframework.web.client.HttpClientErrorException
+import spock.lang.Ignore
 import spock.lang.Narrative
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -114,6 +114,65 @@ class SwitchRulesSpec extends BaseSpecification {
         }
     }
 
+    @Ignore
+    @Unroll
+    def "Able to install default rules on a switch (install-action=#data.installRulesAction)"() {
+        assumeFalse("Unable to run the test because an OF_12 switch has one broadcast rule as the default",
+                srcSwitch.ofVersion == "OF_12" && data.installRulesAction != InstallRulesAction.INSTALL_BROADCAST)
+
+        given: "A switch without any rules"
+        def expectedRules = data.getExpectedRules(srcSwitch)
+
+        northbound.deleteSwitchRules(srcSwitch.dpId, DeleteRulesAction.DROP_ALL)
+        Wrappers.wait(RULES_DELETION_TIME) {
+            assert northbound.getSwitchRules(srcSwitch.dpId).flowEntries.empty
+        }
+
+        when: "Install rules on the switch"
+        def installedRules = northbound.installSwitchRules(srcSwitch.dpId, data.installRulesAction)
+
+        then: "The corresponding rules are really installed"
+        installedRules.size() == data.rulesInstalled
+        Wrappers.wait(RULES_INSTALLATION_TIME) {
+            compareRules(northbound.getSwitchRules(srcSwitch.dpId).flowEntries, expectedRules)
+        }
+
+        and: "Install missing default rules"
+        Wrappers.wait(RULES_INSTALLATION_TIME) {
+            northbound.installSwitchRules(srcSwitch.dpId, InstallRulesAction.INSTALL_DEFAULTS)
+            assert northbound.getSwitchRules(srcSwitch.dpId).flowEntries.size() == srcSwDefaultRules.size()
+        }
+
+        where:
+        data << [[
+                         installRulesAction: InstallRulesAction.INSTALL_DROP,
+                         rulesInstalled    : 1,
+                         getExpectedRules  : { sw ->
+                             getRules(sw).findAll { it.cookie == Cookie.DROP_RULE_COOKIE }
+                         }
+                 ],
+                 [
+                         installRulesAction: InstallRulesAction.INSTALL_BROADCAST,
+                         rulesInstalled    : 1,
+                         getExpectedRules  : { sw ->
+                             getRules(sw).findAll { it.cookie == Cookie.VERIFICATION_BROADCAST_RULE_COOKIE }
+                         }
+                 ],
+                 [
+                         installRulesAction: InstallRulesAction.INSTALL_UNICAST,
+                         rulesInstalled    : 1,
+                         getExpectedRules  : { sw ->
+                             getRules(sw).findAll { it.cookie == Cookie.VERIFICATION_UNICAST_RULE_COOKIE }
+                         }
+                 ],
+                 [
+                         installRulesAction: InstallRulesAction.INSTALL_DEFAULTS,
+                         rulesInstalled    : srcSwDefaultRules.size(),
+                         getExpectedRules  : { sw -> getRules(sw) }
+                 ]
+        ]
+    }
+
     @Unroll
     def "Able to delete rules from a switch (delete-action=#data.deleteRulesAction)"() {
         given: "A switch with some flow rules installed"
@@ -166,19 +225,19 @@ class SwitchRulesSpec extends BaseSpecification {
                 [// Drop all default rules
                  deleteRulesAction: DeleteRulesAction.REMOVE_DEFAULTS,
                  rulesDeleted     : srcSwDefaultRules.size(),
-                 getExpectedRules : { sw, defaultRules -> getFlowRules(sw) }
+                 getExpectedRules : { sw, defaultRules -> getRules(sw, false) }
                 ],
                 [// Drop the default, add them back
                  deleteRulesAction: DeleteRulesAction.REMOVE_ADD_DEFAULTS,
                  rulesDeleted     : srcSwDefaultRules.size(),
-                 getExpectedRules : { sw, defaultRules -> defaultRules + getFlowRules(sw) }
+                 getExpectedRules : { sw, defaultRules -> defaultRules + getRules(sw, false) }
                 ]
         ]
     }
 
     @Unroll
     def "Able to delete default rule from a switch (delete-action=#data.deleteRulesAction)"() {
-        assumeFalse("Unable to run the test because an OF_ 12 switch has one broadcast rule as the default",
+        assumeFalse("Unable to run the test because an OF_12 switch has one broadcast rule as the default",
                 dstSwitch.ofVersion == "OF_12" && data.cookie != Cookie.VERIFICATION_BROADCAST_RULE_COOKIE)
 
         given: "A switch with some flow rules installed"
@@ -186,7 +245,7 @@ class SwitchRulesSpec extends BaseSpecification {
         flowHelper.addFlow(flow)
 
         when: "Delete rules from the switch"
-        def flowRules = getFlowRules(dstSwitch)
+        def flowRules = getRules(dstSwitch, false)
         def deletedRules = northbound.deleteSwitchRules(dstSwitch.dpId, data.deleteRulesAction)
 
         then: "The corresponding rules are really deleted"
@@ -234,7 +293,7 @@ class SwitchRulesSpec extends BaseSpecification {
 
         when: "Delete switch rules by #data.description"
         def deletedRules = northbound.deleteSwitchRules(data.switch.dpId,
-                getFlowRules(data.switch).first()."$data.description")
+                getRules(data.switch, false).first()."$data.description")
 
         then: "The requested rules are really deleted"
         deletedRules.size() == data.rulesDeleted
@@ -562,7 +621,9 @@ class SwitchRulesSpec extends BaseSpecification {
         assert egressRule.byteCount == 0
     }
 
-    List<FlowEntry> getFlowRules(Switch sw) {
-        northbound.getSwitchRules(sw.dpId).flowEntries.findAll { !(it.cookie in sw.defaultCookies) }.sort()
+    List<FlowEntry> getRules(Switch sw, defaultRules = true) {
+        northbound.getSwitchRules(sw.dpId).flowEntries.findAll {
+            defaultRules ? (it.cookie in sw.defaultCookies) : !(it.cookie in sw.defaultCookies)
+        }.sort()
     }
 }
