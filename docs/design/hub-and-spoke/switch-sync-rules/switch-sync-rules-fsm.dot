@@ -1,0 +1,28 @@
+digraph {
+compound=true;
+subgraph cluster_StateMachine {
+label="org.openkilda.wfm.topology.switchmanager.service.fsm.SwitchSyncRulesFsm";
+InstallRules [label="InstallRules"];
+ComputeMissingRules [label="ComputeMissingRules"];
+FinishedWithError [label="FinishedWithError"];
+Initialized [label="Initialized"];
+Finished [label="Finished"];
+ValidateRules [label="ValidateRules"];
+ReceiveRules [label="ReceiveRules"];
+
+InstallRules -> InstallRules [ label="RulesInstalled"];
+InstallRules -> FinishedWithError [ label="Timeout"];
+InstallRules -> FinishedWithError [ label="Error"];
+InstallRules -> ValidateRules [ label="Next"];
+ComputeMissingRules -> FinishedWithError [ label="Timeout"];
+ComputeMissingRules -> FinishedWithError [ label="Error"];
+ComputeMissingRules -> InstallRules [ label="Next"];
+Initialized -> ReceiveRules [ label="Next"];
+ValidateRules -> ValidateRules [ label="RulesValidated"];
+ValidateRules -> FinishedWithError [ label="Timeout"];
+ValidateRules -> FinishedWithError [ label="Error"];
+ValidateRules -> Finished [ label="Next"];
+ReceiveRules -> ReceiveRules [ label="RulesReceived"];
+ReceiveRules -> FinishedWithError [ label="Timeout"];
+ReceiveRules -> FinishedWithError [ label="Error"];
+ReceiveRules -> ComputeMissingRules [ label="Next"];}}
