@@ -15,7 +15,6 @@
 
 package org.openkilda.wfm.topology.discovery.bolt;
 
-import org.openkilda.persistence.PersistenceManager;
 import org.openkilda.wfm.AbstractBolt;
 import org.openkilda.wfm.AbstractOutputAdapter;
 import org.openkilda.wfm.error.AbstractException;
@@ -28,7 +27,7 @@ import org.openkilda.wfm.topology.discovery.model.IslMoveCommand;
 import org.openkilda.wfm.topology.discovery.model.IslReference;
 import org.openkilda.wfm.topology.discovery.model.IslUpCommand;
 import org.openkilda.wfm.topology.discovery.model.UniIslCommand;
-import org.openkilda.wfm.topology.discovery.service.DiscoveryService;
+import org.openkilda.wfm.topology.discovery.service.DiscoveryServiceFactory;
 import org.openkilda.wfm.topology.discovery.service.IUniIslReply;
 
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -36,7 +35,7 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 
-public class UniIslHandler extends AbstractBolt {
+public class UniIslHandler extends DiscoveryAbstractBolt {
     public static final String BOLT_ID = ComponentId.UNI_ISL_HANDLER.toString();
 
     public static final String FIELD_ID_ISL_SOURCE = "isl-source";
@@ -46,12 +45,8 @@ public class UniIslHandler extends AbstractBolt {
     public static final Fields STREAM_FIELDS = new Fields(FIELD_ID_ISL_SOURCE, FIELD_ID_ISL_DEST,
                                                            FIELD_ID_COMMAND, FIELD_ID_CONTEXT);
 
-    private final transient PersistenceManager persistenceManager;
-
-    private transient DiscoveryService discoveryService;
-
-    public UniIslHandler(PersistenceManager persistenceManager) {
-        this.persistenceManager = persistenceManager;
+    public UniIslHandler(DiscoveryServiceFactory serviceFactory) {
+        super(serviceFactory);
     }
 
     @Override
@@ -74,11 +69,6 @@ public class UniIslHandler extends AbstractBolt {
     public void declareOutputFields(OutputFieldsDeclarer streamManager) {
         streamManager.declare(STREAM_FIELDS);
         // TODO
-    }
-
-    @Override
-    protected void init() {
-        discoveryService = new DiscoveryService(persistenceManager);
     }
 
     private static class OutputAdapter extends AbstractOutputAdapter implements IUniIslReply {

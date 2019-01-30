@@ -50,8 +50,15 @@ public interface DiscoveryTopologyConfig extends AbstractTopologyConfig {
         return getKafkaTopics().getSpeakerTopic();
     }
 
+    @Key("bfd.port.offset")
+    @Default("200")
+    int getBfdPortOffset();
+
     @Key("isl.cost.when.port.down")
     int getIslCostWhenPortDown();
+
+    @Key("speaker.io.timeout.seconds")
+    int getSpeakerIoTimeoutSeconds();
 
     @Configuration
     @Key("discovery")

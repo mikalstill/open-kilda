@@ -20,6 +20,7 @@ import org.openkilda.messaging.model.SpeakerSwitchView;
 import org.openkilda.model.Isl;
 import org.openkilda.model.SwitchId;
 import org.openkilda.wfm.share.utils.FsmExecutor;
+import org.openkilda.wfm.topology.discovery.model.DiscoveryOptions;
 import org.openkilda.wfm.topology.discovery.model.Endpoint;
 import org.openkilda.wfm.topology.discovery.model.PortFacts;
 import org.openkilda.wfm.topology.discovery.model.PortFacts.LinkStatus;
@@ -41,6 +42,7 @@ import java.util.Set;
 @Slf4j
 public class SwitchFsm extends AbstractStateMachine<SwitchFsm, SwitchFsmState, SwitchFsmEvent, SwitchFsmContext> {
     private final SwitchId switchId;
+    private final DiscoveryOptions options;
 
     private final Map<Integer, PortFacts> portByNumber = new HashMap<>();
 
@@ -50,7 +52,7 @@ public class SwitchFsm extends AbstractStateMachine<SwitchFsm, SwitchFsmState, S
         builder = StateMachineBuilderFactory.create(
                 SwitchFsm.class, SwitchFsmState.class, SwitchFsmEvent.class, SwitchFsmContext.class,
                 // extra parameters
-                SwitchId.class);
+                SwitchId.class, Integer.class);
 
         // INIT
         builder.transition()
@@ -88,12 +90,13 @@ public class SwitchFsm extends AbstractStateMachine<SwitchFsm, SwitchFsmState, S
         return new FsmExecutor<>(SwitchFsmEvent.NEXT);
     }
 
-    public static SwitchFsm create(SwitchId switchId) {
-        return builder.newStateMachine(SwitchFsmState.INIT, switchId);
+    public static SwitchFsm create(SwitchId switchId, DiscoveryOptions options) {
+        return builder.newStateMachine(SwitchFsmState.INIT, switchId, options);
     }
 
-    private SwitchFsm(SwitchId switchId) {
+    private SwitchFsm(SwitchId switchId, DiscoveryOptions options) {
         this.switchId = switchId;
+        this.options = options;
     }
 
     // -- FSM actions --

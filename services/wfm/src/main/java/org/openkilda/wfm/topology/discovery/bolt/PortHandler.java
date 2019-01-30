@@ -16,17 +16,16 @@
 package org.openkilda.wfm.topology.discovery.bolt;
 
 import org.openkilda.model.Isl;
-import org.openkilda.persistence.PersistenceManager;
 import org.openkilda.wfm.AbstractBolt;
 import org.openkilda.wfm.AbstractOutputAdapter;
 import org.openkilda.wfm.error.AbstractException;
 import org.openkilda.wfm.error.PipelineException;
 import org.openkilda.wfm.topology.discovery.model.Endpoint;
+import org.openkilda.wfm.topology.discovery.model.PortCommand;
 import org.openkilda.wfm.topology.discovery.model.UniIslCommand;
 import org.openkilda.wfm.topology.discovery.model.UniIslPhysicalDownCommand;
 import org.openkilda.wfm.topology.discovery.model.UniIslSetupCommand;
-import org.openkilda.wfm.topology.discovery.model.PortCommand;
-import org.openkilda.wfm.topology.discovery.service.DiscoveryService;
+import org.openkilda.wfm.topology.discovery.service.DiscoveryServiceFactory;
 import org.openkilda.wfm.topology.discovery.service.IPortReply;
 
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -34,10 +33,10 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 
-public class PortHandler extends AbstractBolt {
+public class PortHandler extends DiscoveryAbstractBolt {
     public static final String BOLT_ID = ComponentId.PORT_HANDLER.toString();
 
-    public static final String FIELD_ID_DATAPATH = "datapath";
+    public static final String FIELD_ID_DATAPATH = SwitchHandler.FIELD_ID_DATAPATH;
     public static final String FIELD_ID_PORT_NUMBER = "port-number";
     public static final String FIELD_ID_COMMAND = "command";
 
@@ -48,12 +47,8 @@ public class PortHandler extends AbstractBolt {
     public static final Fields STREAM_POLL_FIELDS = new Fields(FIELD_ID_DATAPATH, FIELD_ID_PORT_NUMBER,
                                                                FIELD_ID_COMMAND, FIELD_ID_CONTEXT);
 
-    private final transient PersistenceManager persistenceManager;
-
-    private transient DiscoveryService discoveryService;
-
-    public PortHandler(PersistenceManager persistenceManager) {
-        this.persistenceManager = persistenceManager;
+    public PortHandler(DiscoveryServiceFactory serviceFactory) {
+        super(serviceFactory);
     }
 
     @Override
@@ -67,7 +62,7 @@ public class PortHandler extends AbstractBolt {
     }
 
     private void handleSwitchCommand(Tuple input) throws PipelineException {
-        PortCommand command = pullValue(input, SwitchHandler.FIELD_ID_PAYLOAD, PortCommand.class);
+        PortCommand command = pullValue(input, SwitchHandler.FIELD_ID_COMMAND, PortCommand.class);
         OutputAdapter outputAdapter = new OutputAdapter(this, input);
         command.apply(discoveryService, outputAdapter);
     }
@@ -76,11 +71,6 @@ public class PortHandler extends AbstractBolt {
     public void declareOutputFields(OutputFieldsDeclarer streamManager) {
         streamManager.declare(STREAM_FIELDS);
         streamManager.declareStream(STREAM_POLL_ID, STREAM_POLL_FIELDS);
-    }
-
-    @Override
-    protected void init() {
-        discoveryService = new DiscoveryService(persistenceManager);
     }
 
     private static class OutputAdapter extends AbstractOutputAdapter implements IPortReply {

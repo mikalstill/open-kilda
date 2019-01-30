@@ -17,12 +17,10 @@ package org.openkilda.wfm.topology.discovery.bolt;
 
 import org.openkilda.messaging.Message;
 import org.openkilda.messaging.command.CommandData;
-import org.openkilda.messaging.info.InfoData;
 import org.openkilda.messaging.info.event.IslInfoData;
 import org.openkilda.messaging.info.event.PortInfoData;
 import org.openkilda.messaging.info.event.SwitchInfoData;
 import org.openkilda.messaging.model.SpeakerSwitchView;
-import org.openkilda.model.SwitchId;
 import org.openkilda.wfm.AbstractBolt;
 import org.openkilda.wfm.AbstractOutputAdapter;
 import org.openkilda.wfm.error.AbstractException;
@@ -50,16 +48,16 @@ public class SpeakerMonitor extends AbstractBolt {
 
     public static final String FIELD_ID_INPUT = InputDecoder.FIELD_ID_INPUT;
     public static final String FIELD_ID_SYNC = "sync";
-    public static final String FIELD_ID_SWITCH_ID = "switch";
+    public static final String FIELD_ID_DATAPATH = "switch";
     public static final String FIELD_ID_REFRESH = "refresh";
 
-    public static final Fields STREAM_FIELDS = new Fields(FIELD_ID_SWITCH_ID, FIELD_ID_INPUT, FIELD_ID_CONTEXT);
+    public static final Fields STREAM_FIELDS = new Fields(FIELD_ID_DATAPATH, FIELD_ID_INPUT, FIELD_ID_CONTEXT);
 
     public static final String STREAM_SPEAKER_ID = "speaker";
     public static final Fields STREAM_SPEAKER_FIELDS = new Fields(SpeakerEncoder.FIELD_ID_PAYLOAD, FIELD_ID_CONTEXT);
 
     public static final String STREAM_REFRESH_ID = "refresh";
-    public static final Fields STREAM_REFRESH_FIELDS = new Fields(FIELD_ID_SWITCH_ID, FIELD_ID_REFRESH,
+    public static final Fields STREAM_REFRESH_FIELDS = new Fields(FIELD_ID_DATAPATH, FIELD_ID_REFRESH,
                                                                   FIELD_ID_CONTEXT);
 
     public static final String STREAM_SYNC_ID = "sync";

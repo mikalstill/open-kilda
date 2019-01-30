@@ -82,7 +82,7 @@ public abstract class WorkerBolt extends CoordinatedBolt {
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         super.declareOutputFields(declarer);
-        declarer.declareStream(workerConfig.getStreamToHub(), true, MessageTranslator.FIELDS);
+        declarer.declareStream(workerConfig.getStreamToHub(), true, MessageTranslator.STREAM_FIELDS);
     }
 
     @Builder

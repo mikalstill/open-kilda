@@ -27,6 +27,10 @@ import org.openkilda.persistence.repositories.IslRepository;
 import org.openkilda.persistence.repositories.RepositoryFactory;
 import org.openkilda.persistence.repositories.SwitchRepository;
 import org.openkilda.wfm.share.utils.FsmExecutor;
+import org.openkilda.wfm.topology.discovery.controller.BfdPortFsm;
+import org.openkilda.wfm.topology.discovery.controller.BfdPortFsmContext;
+import org.openkilda.wfm.topology.discovery.controller.BfdPortFsmEvent;
+import org.openkilda.wfm.topology.discovery.controller.BfdPortFsmState;
 import org.openkilda.wfm.topology.discovery.controller.IslFsm;
 import org.openkilda.wfm.topology.discovery.controller.IslFsmContext;
 import org.openkilda.wfm.topology.discovery.controller.IslFsmEvent;
@@ -44,6 +48,7 @@ import org.openkilda.wfm.topology.discovery.controller.UniIslFsmContext;
 import org.openkilda.wfm.topology.discovery.controller.UniIslFsmEvent;
 import org.openkilda.wfm.topology.discovery.controller.UniIslFsmState;
 import org.openkilda.wfm.topology.discovery.model.DiscoveryFacts;
+import org.openkilda.wfm.topology.discovery.model.DiscoveryOptions;
 import org.openkilda.wfm.topology.discovery.model.Endpoint;
 import org.openkilda.wfm.topology.discovery.model.IslReference;
 import org.openkilda.wfm.topology.discovery.model.OperationMode;
@@ -62,9 +67,11 @@ import java.util.Set;
 @Slf4j
 public class DiscoveryService {
     private final PersistenceManager persistenceManager;
+    private final DiscoveryOptions options;
 
     private final Map<SwitchId, SwitchFsm> switchController = new HashMap<>();
     private final Map<Endpoint, PortFsm> portController = new HashMap<>();
+    private final Map<Endpoint, BfdPortFsm> bfdPortController = new HashMap<>();
     private final Map<Endpoint, UniIslFsm> uniIslController = new HashMap<>();
     private final Map<IslReference, IslFsm> islController = new HashMap<>();
 
@@ -72,13 +79,16 @@ public class DiscoveryService {
             = SwitchFsm.makeExecutor();
     private final FsmExecutor<PortFsm, PortFsmState, PortFsmEvent, PortFsmContext> portControllerExecutor
             = PortFsm.makeExecutor();
+    private final FsmExecutor<BfdPortFsm, BfdPortFsmState, BfdPortFsmEvent, BfdPortFsmContext>
+            bfdPortFsmControllerExecutor = BfdPortFsm.makeExecutor();
     private final FsmExecutor<UniIslFsm, UniIslFsmState, UniIslFsmEvent, UniIslFsmContext> uniIslControllerExecutor
             = UniIslFsm.makeExecutor();
     private final FsmExecutor<IslFsm, IslFsmState, IslFsmEvent, IslFsmContext> islControllerExecutor
             = IslFsm.makeExecutor();
 
-    public DiscoveryService(PersistenceManager persistenceManager) {
+    public DiscoveryService(PersistenceManager persistenceManager, DiscoveryOptions options) {
         this.persistenceManager = persistenceManager;
+        this.options = options;
     }
 
     // -- NetworkPreloader --
@@ -92,7 +102,7 @@ public class DiscoveryService {
     // -- SwitchHandler --
 
     public void switchAddWithHistory(SwitchHistory history, ISwitchReply outputAdapter) {
-        SwitchFsm switchFsm = SwitchFsm.create(history.getSwitchId());
+        SwitchFsm switchFsm = SwitchFsm.create(history.getSwitchId(), options);
 
         SwitchFsmContext fsmContext = new SwitchFsmContext(outputAdapter);
         fsmContext.setHistory(history);
@@ -231,6 +241,8 @@ public class DiscoveryService {
         portControllerExecutor.fire(portFsm, PortFsmEvent.OFFLINE, context);
     }
 
+    // -- BfdPortHandler --
+
     // -- UniIslHandler --
 
     public void uniIslSetup(Endpoint endpoint, Isl history, IUniIslReply outputAdapter) {
@@ -331,7 +343,7 @@ public class DiscoveryService {
     }
 
     private SwitchFsm locateSwitchFsmCreateIfAbsent(SwitchId datapath) {
-        return switchController.computeIfAbsent(datapath, key -> SwitchFsm.create(datapath));
+        return switchController.computeIfAbsent(datapath, key -> SwitchFsm.create(datapath, options));
     }
 
     private PortFsm locatePortFsm(Endpoint endpoint) {

@@ -17,7 +17,6 @@ package org.openkilda.wfm.topology.discovery.bolt;
 
 import org.openkilda.messaging.model.SpeakerSwitchView;
 import org.openkilda.model.Isl;
-import org.openkilda.persistence.PersistenceManager;
 import org.openkilda.wfm.AbstractBolt;
 import org.openkilda.wfm.AbstractOutputAdapter;
 import org.openkilda.wfm.error.PipelineException;
@@ -30,7 +29,7 @@ import org.openkilda.wfm.topology.discovery.model.PortRemoveCommand;
 import org.openkilda.wfm.topology.discovery.model.PortSetupCommand;
 import org.openkilda.wfm.topology.discovery.model.SpeakerSharedSync;
 import org.openkilda.wfm.topology.discovery.model.SwitchCommand;
-import org.openkilda.wfm.topology.discovery.service.DiscoveryService;
+import org.openkilda.wfm.topology.discovery.service.DiscoveryServiceFactory;
 import org.openkilda.wfm.topology.discovery.service.ISwitchReply;
 
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -39,23 +38,23 @@ import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 import org.apache.storm.utils.Utils;
 
-public class SwitchHandler extends AbstractBolt {
+public class SwitchHandler extends DiscoveryAbstractBolt {
     public static final String BOLT_ID = ComponentId.SWITCH_HANDLER.toString();
 
-    public static final String FIELD_ID_SWITCH_ID = SpeakerMonitor.FIELD_ID_SWITCH_ID;
+    public static final String FIELD_ID_DATAPATH = SpeakerMonitor.FIELD_ID_DATAPATH;
     public static final String FIELD_ID_PORT_NUMBER = "port-number";
-    public static final String FIELD_ID_PAYLOAD = "payload";
+    public static final String FIELD_ID_COMMAND = "command";
 
-    public static final String STREAM_PORT_ID = "ports";
-    public static final Fields STREAM_PORT_FIELDS = new Fields(FIELD_ID_SWITCH_ID, FIELD_ID_PORT_NUMBER,
-                                                               FIELD_ID_PAYLOAD, FIELD_ID_CONTEXT);
+    public static final String STREAM_PORT_ID = "port";
+    public static final Fields STREAM_PORT_FIELDS = new Fields(FIELD_ID_DATAPATH, FIELD_ID_PORT_NUMBER,
+                                                               FIELD_ID_COMMAND, FIELD_ID_CONTEXT);
 
-    private final PersistenceManager persistenceManager;
+    public static final String STREAM_BFD_PORT_ID = "bfd-port";
+    public static final Fields STREAM_BFD_PORT_FIELDS = new Fields(FIELD_ID_DATAPATH, FIELD_ID_COMMAND,
+                                                                   FIELD_ID_CONTEXT);
 
-    private transient DiscoveryService discoveryService;
-
-    public SwitchHandler(PersistenceManager persistenceManager) {
-        this.persistenceManager = persistenceManager;
+    public SwitchHandler(DiscoveryServiceFactory serviceFactory) {
+        super(serviceFactory);
     }
 
     @Override
@@ -106,13 +105,9 @@ public class SwitchHandler extends AbstractBolt {
     }
 
     @Override
-    protected void init() {
-        discoveryService = new DiscoveryService(persistenceManager);
-    }
-
-    @Override
     public void declareOutputFields(OutputFieldsDeclarer streamManager) {
         streamManager.declareStream(STREAM_PORT_ID, STREAM_PORT_FIELDS);
+        streamManager.declareStream(STREAM_BFD_PORT_ID, STREAM_BFD_PORT_FIELDS);
     }
 
     private static class OutputAdapter extends AbstractOutputAdapter implements ISwitchReply {

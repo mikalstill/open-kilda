@@ -15,37 +15,73 @@
 
 package org.openkilda.wfm.topology.discovery.bolt;
 
-import org.openkilda.persistence.PersistenceManager;
 import org.openkilda.wfm.AbstractBolt;
+import org.openkilda.wfm.AbstractOutputAdapter;
 import org.openkilda.wfm.error.AbstractException;
-import org.openkilda.wfm.topology.discovery.service.DiscoveryService;
+import org.openkilda.wfm.error.PipelineException;
+import org.openkilda.wfm.topology.discovery.model.BfdPortCommand;
+import org.openkilda.wfm.topology.discovery.model.BfdSpeakerWorkerCommand;
+import org.openkilda.wfm.topology.discovery.service.DiscoveryServiceFactory;
+import org.openkilda.wfm.topology.discovery.service.IBfdPortReply;
+import org.openkilda.wfm.topology.utils.MessageTranslator;
 
 import org.apache.storm.topology.OutputFieldsDeclarer;
+import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
+import org.apache.storm.tuple.Values;
 
-public class BfdPortHandler extends AbstractBolt {
+public class BfdPortHandler extends DiscoveryAbstractBolt {
     public static final String BOLT_ID = ComponentId.BFD_PORT_HANDLER.toString();
 
-    private final PersistenceManager persistenceManager;
+    public static final String FIELD_ID_COMMAND_KEY = MessageTranslator.KEY_FIELD;
+    public static final String FIELD_ID_COMMAND = "command";
 
-    private transient DiscoveryService discoveryService;
+    public static final String STREAM_SPEAKER_ID = "speaker";
+    public static final Fields STREAM_SPEAKER_FIELDS = new Fields(FIELD_ID_COMMAND_KEY, FIELD_ID_COMMAND,
+                                                                  FIELD_ID_CONTEXT);
 
-    public BfdPortHandler(PersistenceManager persistenceManager) {
-        this.persistenceManager = persistenceManager;
+    public BfdPortHandler(DiscoveryServiceFactory serviceFactory) {
+        super(serviceFactory);
     }
 
     @Override
     protected void handleInput(Tuple input) throws AbstractException {
-        // TODO
+        String source = input.getSourceComponent();
+        if (SwitchHandler.BOLT_ID.equals(source)) {
+            handleSwitchCommand(input);
+        } else if (IslHandler.BOLT_ID.equals(source)) {
+            handleIslCommand(input);
+        } else {
+            unhandledInput(input);
+        }
+    }
+
+    private void handleSwitchCommand(Tuple input) throws PipelineException {
+        handleCommand(input, SwitchHandler.FIELD_ID_COMMAND);
+    }
+
+    private void handleIslCommand(Tuple input) throws PipelineException {
+        handleCommand(input, IslHandler.FIELD_ID_COMMAND);
+    }
+
+    private void handleCommand(Tuple input, String fieldName) throws PipelineException {
+        BfdPortCommand command = pullValue(input, fieldName, BfdPortCommand.class);
+        command.apply(discoveryService, new OutputAdapter(this, input));
     }
 
     @Override
-    protected void init() {
-        discoveryService = new DiscoveryService(persistenceManager);
+    public void declareOutputFields(OutputFieldsDeclarer streamManager) {
+        streamManager.declareStream(STREAM_SPEAKER_ID, STREAM_SPEAKER_FIELDS);
     }
 
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        // TODO
+    private static class OutputAdapter extends AbstractOutputAdapter implements IBfdPortReply {
+        public OutputAdapter(AbstractBolt owner, Tuple tuple) {
+            super(owner, tuple);
+        }
+
+        private Values makeSpeakerTuple(BfdSpeakerWorkerCommand command) {
+            // TODO
+            return new Values();
+        }
     }
 }

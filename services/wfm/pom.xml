@@ -257,12 +257,6 @@
             <version>${storm.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.squirrelframework</groupId>
-            <artifactId>squirrel-foundation</artifactId>
-            <version>0.3.8</version>
-        </dependency>
-
         <!-- ~~~~~~~ -->
         <!-- TESTING -->
         <!-- ~~~~~~~ -->

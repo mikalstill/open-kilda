@@ -15,7 +15,6 @@
 
 package org.openkilda.wfm.topology.discovery.bolt;
 
-import org.openkilda.persistence.PersistenceManager;
 import org.openkilda.wfm.AbstractBolt;
 import org.openkilda.wfm.AbstractOutputAdapter;
 import org.openkilda.wfm.error.AbstractException;
@@ -25,7 +24,7 @@ import org.openkilda.wfm.topology.discovery.model.BfdPortCommand;
 import org.openkilda.wfm.topology.discovery.model.Endpoint;
 import org.openkilda.wfm.topology.discovery.model.IslCommand;
 import org.openkilda.wfm.topology.discovery.model.IslReference;
-import org.openkilda.wfm.topology.discovery.service.DiscoveryService;
+import org.openkilda.wfm.topology.discovery.service.DiscoveryServiceFactory;
 import org.openkilda.wfm.topology.discovery.service.IIslReply;
 
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -33,24 +32,18 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 
-public class IslHandler extends AbstractBolt {
+public class IslHandler extends DiscoveryAbstractBolt {
     public static final String BOLT_ID = ComponentId.ISL_HANDLER.toString();
 
     public static final String FIELD_ID_DATAPATH = "datapath";
-    public static final String FIELD_ID_PORT_NUMBER = "port-number";
     public static final String FIELD_ID_COMMAND = UniIslHandler.FIELD_ID_COMMAND;
 
     public static final String STREAM_BFD_PORT_ID = "bfd-port";
-    public static final Fields STREAM_BFD_PORT_FIELDS = new Fields(FIELD_ID_DATAPATH, FIELD_ID_PORT_NUMBER,
+    public static final Fields STREAM_BFD_PORT_FIELDS = new Fields(FIELD_ID_DATAPATH,
                                                                    FIELD_ID_COMMAND, FIELD_ID_CONTEXT);
 
-    private final PersistenceManager persistenceManager;
-    private final int bfdPortOffset = 200; // FIXME(surabujin): use config
-
-    private transient DiscoveryService discoveryService;
-
-    public IslHandler(PersistenceManager persistenceManager) {
-        this.persistenceManager = persistenceManager;
+    public IslHandler(DiscoveryServiceFactory serviceFactory) {
+        super(serviceFactory);
     }
 
     @Override
@@ -69,35 +62,23 @@ public class IslHandler extends AbstractBolt {
     }
 
     @Override
-    protected void init() {
-        discoveryService = new DiscoveryService(persistenceManager);
-    }
-
-    @Override
     public void declareOutputFields(OutputFieldsDeclarer streamManager) {
         streamManager.declareStream(STREAM_BFD_PORT_ID, STREAM_BFD_PORT_FIELDS);
     }
 
-    private Endpoint makeBfdEndpoint(Endpoint endpoint) {
-        return new Endpoint(endpoint.getDatapath(), endpoint.getPortNumber() + bfdPortOffset);
-    }
-
     private static class OutputAdapter extends AbstractOutputAdapter implements IIslReply {
-        private final IslHandler owner;
-
-        public OutputAdapter(IslHandler owner, Tuple tuple) {
+        public OutputAdapter(AbstractBolt owner, Tuple tuple) {
             super(owner, tuple);
-            this.owner = owner;
         }
 
         @Override
         public void notifyBiIslUp(Endpoint endpoint, IslReference reference) {
-            new BfdPortBiIslUpCommand(owner.makeBfdEndpoint(endpoint), reference);
+            emit(STREAM_BFD_PORT_ID, makeBfdPortTuple(new BfdPortBiIslUpCommand(endpoint, reference)));
         }
 
         private Values makeBfdPortTuple(BfdPortCommand command) {
             Endpoint endpoint = command.getEndpoint();
-            return new Values(endpoint.getDatapath(), endpoint.getPortNumber(), command, getContext());
+            return new Values(endpoint.getDatapath(), command, getContext());
         }
     }
 }

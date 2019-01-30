@@ -16,11 +16,11 @@
 package org.openkilda.wfm.topology.discovery.bolt;
 
 import org.openkilda.model.SwitchId;
-import org.openkilda.persistence.PersistenceManager;
 import org.openkilda.wfm.CommandContext;
 import org.openkilda.wfm.topology.discovery.model.SwitchHistory;
 import org.openkilda.wfm.topology.discovery.model.SwitchHistoryCommand;
 import org.openkilda.wfm.topology.discovery.service.DiscoveryService;
+import org.openkilda.wfm.topology.discovery.service.DiscoveryServiceFactory;
 import org.openkilda.wfm.topology.discovery.service.ISwitchPrepopulateReply;
 
 import org.apache.storm.spout.SpoutOutputCollector;
@@ -35,19 +35,19 @@ import java.util.Map;
 public class NetworkPreloader extends BaseRichSpout {
     public static final String SPOUT_ID = ComponentId.NETWORK_PRELOADER.toString();
 
-    public static final String FIELD_ID_SWITCH_ID = SpeakerMonitor.FIELD_ID_SWITCH_ID;
+    public static final String FIELD_ID_DATAPATH = SpeakerMonitor.FIELD_ID_DATAPATH;
     public static final String FIELD_ID_PAYLOAD = "switch-init";
 
-    public static final Fields STREAM_FIELDS = new Fields(FIELD_ID_SWITCH_ID, FIELD_ID_PAYLOAD);
+    public static final Fields STREAM_FIELDS = new Fields(FIELD_ID_DATAPATH, FIELD_ID_PAYLOAD);
 
-    private final PersistenceManager persistenceManager;
+    private final DiscoveryServiceFactory serviceFactory;
     private transient DiscoveryService discovery;
     private transient SpoutOutputCollector output;
 
     private boolean workDone = false;
 
-    public NetworkPreloader(PersistenceManager persistenceManager) {
-        this.persistenceManager = persistenceManager;
+    public NetworkPreloader(DiscoveryServiceFactory serviceFactory) {
+        this.serviceFactory = serviceFactory;
     }
 
     @Override
@@ -64,7 +64,7 @@ public class NetworkPreloader extends BaseRichSpout {
     @Override
     public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
         output = collector;
-        discovery = new DiscoveryService(persistenceManager);
+        discovery = serviceFactory.produce();
     }
 
     @Override
