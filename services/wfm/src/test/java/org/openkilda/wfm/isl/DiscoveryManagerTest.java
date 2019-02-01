@@ -32,6 +32,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -351,6 +352,7 @@ public class DiscoveryManagerTest {
         List<NetworkEndpoint> affectedEndpoints = filterEndpointsByDatapath(srcNode1.getDatapath(), allEndpoints);
         SpeakerSwitchView switchView = new SpeakerSwitchView(
                 srcNode1.getDatapath(),
+                InetAddress.getByName("127.1.0.1"),
                 ImmutableSet.of(SpeakerSwitchView.Feature.METERS),
                 affectedEndpoints.stream()
                         .map(entry -> new SpeakerSwitchPortView(entry.getPortNumber(), SpeakerSwitchPortView.State.UP))
