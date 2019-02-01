@@ -27,12 +27,18 @@ public class IslReference {
     private final Endpoint source;
     private final Endpoint dest;
 
+    /**
+     * Make {@link IslReference} from {@link IslInfoData}.
+     */
     public static IslReference of(IslInfoData speakerData) {
         Endpoint source = new Endpoint(speakerData.getSource());
         Endpoint dest = new Endpoint(speakerData.getDestination());
         return new IslReference(source, dest);
     }
 
+    /**
+     * Make {@link IslReference} from {@link Isl}.
+     */
     public static IslReference of(Isl daoData) {
         Endpoint source = new Endpoint(daoData.getSrcSwitch().getSwitchId(), daoData.getSrcPort());
         Endpoint dest = new Endpoint(daoData.getDestSwitch().getSwitchId(), daoData.getDestPort());

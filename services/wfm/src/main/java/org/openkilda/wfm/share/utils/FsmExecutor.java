@@ -24,6 +24,11 @@ public class FsmExecutor<T extends AbstractStateMachine<T, S, E, C>, S, E, C> {
         this.next = next;
     }
 
+    /**
+     * Fire "next" event into FSM until it stops switch state.
+     *
+     * <p>In other words it force FSM to process all intermediate states and stop in "major" state.</p>
+     */
     public T fire(T fsm, E event, C context) {
         fsm.fire(event, context);
         skipIntermediateStates(fsm, context);

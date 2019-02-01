@@ -23,7 +23,8 @@ import org.squirrelframework.foundation.fsm.StateMachineBuilder;
 import org.squirrelframework.foundation.fsm.StateMachineBuilderFactory;
 import org.squirrelframework.foundation.fsm.impl.AbstractStateMachine;
 
-public class BfdPortFsm extends AbstractStateMachine<BfdPortFsm, BfdPortFsmState, BfdPortFsmEvent, BfdPortFsmContext> {
+public final class BfdPortFsm extends
+        AbstractStateMachine<BfdPortFsm, BfdPortFsmState, BfdPortFsmEvent, BfdPortFsmContext> {
     private final Endpoint physicalEndpoint;
     private final PortFacts logicalPort;
     private Integer discriminator = null;

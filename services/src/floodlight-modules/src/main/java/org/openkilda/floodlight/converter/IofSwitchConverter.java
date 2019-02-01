@@ -37,7 +37,8 @@ public final class IofSwitchConverter {
      * @param eventType switch state.
      * @return converted switch.
      */
-    public static SwitchInfoData buildSwitchInfoData(IOFSwitch sw, SpeakerSwitchView switchView, SwitchChangeType eventType) {
+    public static SwitchInfoData buildSwitchInfoData(IOFSwitch sw, SpeakerSwitchView switchView,
+                                                     SwitchChangeType eventType) {
         SwitchId switchId = new SwitchId(sw.getId().getLong());
         InetSocketAddress address = (InetSocketAddress) sw.getInetAddress();
         InetSocketAddress controller = (InetSocketAddress) sw.getConnectionByCategory(

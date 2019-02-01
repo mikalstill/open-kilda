@@ -40,7 +40,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Slf4j
-public class SwitchFsm extends AbstractStateMachine<SwitchFsm, SwitchFsmState, SwitchFsmEvent, SwitchFsmContext> {
+public final class SwitchFsm extends AbstractStateMachine<SwitchFsm, SwitchFsmState, SwitchFsmEvent, SwitchFsmContext> {
     private final SwitchId switchId;
     private final DiscoveryOptions options;
 

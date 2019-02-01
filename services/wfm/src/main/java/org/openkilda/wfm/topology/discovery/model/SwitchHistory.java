@@ -21,9 +21,8 @@ import org.openkilda.model.SwitchId;
 import lombok.Value;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Value
 public class SwitchHistory implements Serializable {

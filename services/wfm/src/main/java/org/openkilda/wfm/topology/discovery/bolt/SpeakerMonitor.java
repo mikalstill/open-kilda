@@ -32,7 +32,6 @@ import org.openkilda.wfm.topology.discovery.model.SpeakerSync;
 import org.openkilda.wfm.topology.discovery.model.SwitchCommand;
 import org.openkilda.wfm.topology.discovery.model.SwitchEventCommand;
 import org.openkilda.wfm.topology.discovery.service.SpeakerMonitorService;
-import org.openkilda.wfm.topology.event.bolt.SpeakerDecoder;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -81,7 +80,7 @@ public class SpeakerMonitor extends AbstractBolt {
         if (MonotonicTick.BOLT_ID.equals(source)) {
             long timeMillis = pullValue(input, MonotonicTick.FIELD_ID_TIME_MILLIS, Long.class);
             monitor.timerTick(outputAdapter, timeMillis);
-        } else if (SpeakerDecoder.BOLT_ID.equals(source)) {
+        } else if (InputDecoder.BOLT_ID.equals(source)) {
             Message message = pullValue(input, FIELD_ID_INPUT, Message.class);
             monitor.speakerMessage(outputAdapter, message);
         } else {
@@ -102,7 +101,8 @@ public class SpeakerMonitor extends AbstractBolt {
         streamManager.declareStream(STREAM_SYNC_ID, STREAM_SYNC_FIELDS);
     }
 
-    private static class OutputAdapter extends AbstractOutputAdapter {
+    // FIXME(surabujin): use interface to refer on this object from service
+    public static class OutputAdapter extends AbstractOutputAdapter {
         OutputAdapter(AbstractBolt owner, Tuple tuple) {
             super(owner, tuple);
         }
@@ -124,6 +124,9 @@ public class SpeakerMonitor extends AbstractBolt {
             emit(STREAM_SPEAKER_ID, new Values(payload, getContext()));
         }
 
+        /**
+         * .
+         */
         public void shareSync(SpeakerSync payload) {
             for (SpeakerSwitchView entry : payload.getActiveSwitches()) {
                 emit(STREAM_REFRESH_ID, new Values(entry.getDatapath(), entry, getContext()));

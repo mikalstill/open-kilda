@@ -27,11 +27,11 @@ import org.openkilda.wfm.topology.discovery.bolt.ComponentId;
 import org.openkilda.wfm.topology.discovery.bolt.InputDecoder;
 import org.openkilda.wfm.topology.discovery.bolt.IslHandler;
 import org.openkilda.wfm.topology.discovery.bolt.MonotonicTick;
+import org.openkilda.wfm.topology.discovery.bolt.NetworkPreloader;
 import org.openkilda.wfm.topology.discovery.bolt.PortHandler;
 import org.openkilda.wfm.topology.discovery.bolt.SpeakerEncoder;
 import org.openkilda.wfm.topology.discovery.bolt.SpeakerMonitor;
 import org.openkilda.wfm.topology.discovery.bolt.SwitchHandler;
-import org.openkilda.wfm.topology.discovery.bolt.NetworkPreloader;
 import org.openkilda.wfm.topology.discovery.bolt.UniIslHandler;
 import org.openkilda.wfm.topology.discovery.model.DiscoveryOptions;
 import org.openkilda.wfm.topology.discovery.service.DiscoveryServiceFactory;
@@ -174,7 +174,7 @@ public class DiscoveryTopology extends AbstractTopology<DiscoveryTopologyConfig>
         SpeakerEncoder bolt = new SpeakerEncoder();
         topology.setBolt(SpeakerEncoder.BOLT_ID, bolt, scaleFactor)
                 .shuffleGrouping(SpeakerMonitor.BOLT_ID, SpeakerMonitor.STREAM_SPEAKER_ID);
-                // TODO(surabujin): subscribe
+        // TODO(surabujin): subscribe
 
         KafkaBolt output = createKafkaBolt(topologyConfig.getKafkaSpeakerTopic());
         topology.setBolt(ComponentId.SPEAKER_OUTPUT.toString(), output, scaleFactor)

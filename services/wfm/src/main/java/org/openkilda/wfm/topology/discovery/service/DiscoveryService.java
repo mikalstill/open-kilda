@@ -93,6 +93,9 @@ public class DiscoveryService {
 
     // -- NetworkPreloader --
 
+    /**
+     * .
+     */
     public void prepopulate(ISwitchPrepopulateReply reply) {
         for (SwitchHistory history : loadNetworkHistory()) {
             reply.switchAddWithHistory(history);
@@ -101,6 +104,9 @@ public class DiscoveryService {
 
     // -- SwitchHandler --
 
+    /**
+     * .
+     */
     public void switchAddWithHistory(SwitchHistory history, ISwitchReply outputAdapter) {
         SwitchFsm switchFsm = SwitchFsm.create(history.getSwitchId(), options);
 
@@ -111,6 +117,9 @@ public class DiscoveryService {
         switchControllerExecutor.fire(switchFsm, SwitchFsmEvent.HISTORY, fsmContext);
     }
 
+    /**
+     * .
+     */
     public void switchRestoreManagement(SpeakerSwitchView switchView, ISwitchReply outputAdapter) {
         SwitchFsmContext fsmContext = new SwitchFsmContext(outputAdapter);
         fsmContext.setSpeakerData(switchView);
@@ -119,6 +128,9 @@ public class DiscoveryService {
         switchControllerExecutor.fire(fsm, SwitchFsmEvent.ONLINE, fsmContext);
     }
 
+    /**
+     * .
+     */
     public void switchSharedSync(SpeakerSharedSync sharedSync, ISwitchReply outputAdapter) {
         // FIXME(surabujin): invalid in multi-FL environment
         switch (sharedSync.getMode()) {
@@ -136,6 +148,9 @@ public class DiscoveryService {
         }
     }
 
+    /**
+     * .
+     */
     public void switchEvent(SwitchInfoData payload, ISwitchReply outputAdapter) {
         SwitchFsmContext fsmContext = new SwitchFsmContext(outputAdapter);
         SwitchFsmEvent event = null;
@@ -160,6 +175,9 @@ public class DiscoveryService {
         }
     }
 
+    /**
+     * .
+     */
     public void switchPortEvent(PortInfoData payload, ISwitchReply outputAdapter) {
         SwitchFsmContext fsmContext = new SwitchFsmContext(outputAdapter);
         fsmContext.setPortNumber(payload.getPortNo());
@@ -196,12 +214,18 @@ public class DiscoveryService {
 
     // -- PortHandler --
 
+    /**
+     * .
+     */
     public void portSetup(PortFacts portFacts, Isl history, IPortReply outputAdapter) {
         Endpoint endpoint = portFacts.getEndpoint();
         PortFsm portFsm = PortFsm.create(endpoint, history);
         portController.put(endpoint, portFsm);
     }
 
+    /**
+     * .
+     */
     public void portOnlineModeSwitch(Endpoint endpoint, boolean online, IPortReply outputAdapter) {
         PortFsm portFsm = locatePortFsm(endpoint);
         PortFsmEvent event;
@@ -213,6 +237,9 @@ public class DiscoveryService {
         portControllerExecutor.fire(portFsm, event, new PortFsmContext(outputAdapter));
     }
 
+    /**
+     * .
+     */
     public void portLinkStatusSwitch(Endpoint endpoint, PortFacts.LinkStatus status, IPortReply outputAdapter) {
         PortFsm portFsm = locatePortFsm(endpoint);
         PortFsmEvent event;
@@ -230,6 +257,9 @@ public class DiscoveryService {
         portControllerExecutor.fire(portFsm, event, new PortFsmContext(outputAdapter));
     }
 
+    /**
+     * .
+     */
     public void portRemove(Endpoint endpoint, IPortReply outputAdapter) {
         PortFsm portFsm = portController.remove(endpoint);
         if (portFsm == null) {
@@ -250,6 +280,9 @@ public class DiscoveryService {
         uniIslController.put(endpoint, uniIslFsm);
     }
 
+    /**
+     * .
+     */
     public void uniIslDiscovery(Endpoint endpoint, IslInfoData speakerDiscoveryEvent, IUniIslReply outputAdapter) {
         UniIslFsmContext context = new UniIslFsmContext(outputAdapter);
         context.setDiscoveryEvent(speakerDiscoveryEvent);
@@ -261,11 +294,17 @@ public class DiscoveryService {
         uniIslControllerExecutor.fire(locateUniIslFsm(endpoint), UniIslFsmEvent.FAIL, context);
     }
 
+    /**
+     * .
+     */
     public void uniIslPhysicalDown(Endpoint endpoint, IUniIslReply outputAdapter) {
         UniIslFsmContext context = new UniIslFsmContext(outputAdapter);
         uniIslControllerExecutor.fire(locateUniIslFsm(endpoint), UniIslFsmEvent.PHYSICAL_DOWN, context);
     }
 
+    /**
+     * .
+     */
     public void uniIslBfdUpDown(Endpoint endpoint, boolean isUp, IUniIslReply outputAdapter) {
         UniIslFsmContext context = new UniIslFsmContext(outputAdapter);
         UniIslFsmEvent event = isUp ? UniIslFsmEvent.BFD_UP : UniIslFsmEvent.BFD_DOWN;
@@ -274,6 +313,9 @@ public class DiscoveryService {
 
     // -- IslHandler --
 
+    /**
+     * .
+     */
     public void islUp(Endpoint endpoint, DiscoveryFacts discoveryFacts, IIslReply outputAdapter) {
         IslFsm islFsm = localteIslFsmCreateIfAbsent(discoveryFacts.getReference());
         IslFsmContext context = new IslFsmContext(outputAdapter, endpoint);

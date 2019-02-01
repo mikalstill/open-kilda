@@ -17,7 +17,6 @@ package org.openkilda.wfm.topology.discovery.model;
 
 import org.openkilda.model.Isl;
 import org.openkilda.wfm.topology.discovery.service.DiscoveryService;
-import org.openkilda.wfm.topology.discovery.service.IPortReply;
 import org.openkilda.wfm.topology.discovery.service.IUniIslReply;
 
 public class UniIslSetupCommand extends UniIslCommand {

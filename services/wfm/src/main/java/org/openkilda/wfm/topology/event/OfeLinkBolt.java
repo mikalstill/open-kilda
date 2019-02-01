@@ -43,8 +43,8 @@ import org.openkilda.messaging.info.event.SwitchChangeType;
 import org.openkilda.messaging.info.event.SwitchInfoData;
 import org.openkilda.messaging.model.DiscoveryLink;
 import org.openkilda.messaging.model.NetworkEndpoint;
-import org.openkilda.messaging.model.Switch;
-import org.openkilda.messaging.model.SwitchPort;
+import org.openkilda.messaging.model.SpeakerSwitchPortView;
+import org.openkilda.messaging.model.SpeakerSwitchView;
 import org.openkilda.model.SwitchId;
 import org.openkilda.wfm.OfeMessageUtils;
 import org.openkilda.wfm.WatchDog;
@@ -383,8 +383,8 @@ public class OfeLinkBolt
         InfoData data = infoMessage.getData();
         if (data instanceof NetworkDumpSwitchData) {
             NetworkDumpSwitchData networkDumpSwitchData = (NetworkDumpSwitchData) data;
-            Switch originalSwitch = networkDumpSwitchData.getSwitchRecord();
-            Switch switchWithNoBfdPorts = originalSwitch.toBuilder()
+            SpeakerSwitchView originalSwitch = networkDumpSwitchData.getSwitchView();
+            SpeakerSwitchView switchWithNoBfdPorts = originalSwitch.toBuilder()
                     .ports(originalSwitch.getPorts()
                             .stream()
                             .filter(port -> port.getNumber() <= bfdPortOffset).collect(Collectors.toList()))
@@ -460,12 +460,12 @@ public class OfeLinkBolt
             // It's possible that we get duplicated switch up events .. particulary if
             // FL goes down and then comes back up; it'll rebuild its switch / port information.
             // NB: need to account for this, and send along to TE to be conservative.
-            discovery.registerSwitch(switchData.getSwitchRecord());
+            discovery.registerSwitch(switchData.getSwitchView());
 
             // Produce port UP log records to match with current behavior i.e. switch-ADD event is a predecessor
             // for set of port-UP events.
-            for (SwitchPort port : switchData.getSwitchRecord().getPorts()) {
-                if (SwitchPort.State.UP == port.getState()) {
+            for (SpeakerSwitchPortView port : switchData.getSwitchView().getPorts()) {
+                if (SpeakerSwitchPortView.State.UP == port.getState()) {
                     logger.info("DISCO: Port Event: switch={} port={} state={}",
                                 switchId, port.getNumber(), PortChangeType.UP);
                 }

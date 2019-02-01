@@ -22,8 +22,7 @@ import org.openkilda.messaging.info.InfoMessage;
 import org.openkilda.messaging.info.event.IslInfoData;
 import org.openkilda.messaging.info.event.PortInfoData;
 import org.openkilda.messaging.info.event.SwitchInfoData;
-import org.openkilda.model.SwitchId;
-import org.openkilda.wfm.share.utils.WatchDog;
+import org.openkilda.wfm.WatchDog;
 import org.openkilda.wfm.topology.discovery.bolt.SpeakerMonitor.OutputAdapter;
 import org.openkilda.wfm.topology.discovery.model.OperationMode;
 

@@ -15,7 +15,6 @@
 
 package org.openkilda.wfm.topology.ping.bolt;
 
-import org.openkilda.wfm.CommandContext;
 import org.openkilda.wfm.share.bolt.AbstractTick;
 
 import org.apache.storm.topology.OutputFieldsDeclarer;

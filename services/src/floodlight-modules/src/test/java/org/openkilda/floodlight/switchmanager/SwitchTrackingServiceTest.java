@@ -41,8 +41,8 @@ import org.openkilda.messaging.info.discovery.NetworkDumpEndMarker;
 import org.openkilda.messaging.info.discovery.NetworkDumpSwitchData;
 import org.openkilda.messaging.info.event.SwitchChangeType;
 import org.openkilda.messaging.info.event.SwitchInfoData;
-import org.openkilda.messaging.model.SpeakerSwitchView;
 import org.openkilda.messaging.model.SpeakerSwitchPortView;
+import org.openkilda.messaging.model.SpeakerSwitchView;
 import org.openkilda.model.SwitchId;
 
 import com.google.common.collect.ImmutableList;
@@ -86,6 +86,8 @@ public class SwitchTrackingServiceTest extends EasyMockSupport {
     private final SwitchTrackingService service = new SwitchTrackingService();
 
     private final FloodlightModuleContext moduleContext = new FloodlightModuleContext();
+
+    private InetAddress switchIpAddress;
 
     @Mock
     private SwitchManager switchManager;
@@ -167,7 +169,8 @@ public class SwitchTrackingServiceTest extends EasyMockSupport {
         switchActivateTest(prepareRemovedSwitchEvent(), null);
     }
 
-    private void switchActivateTest(Capture<Message> producedMessage, SpeakerSwitchView expectedSwitchView) throws Exception {
+    private void switchActivateTest(Capture<Message> producedMessage, SpeakerSwitchView expectedSwitchView)
+            throws Exception {
         switchManager.activate(dpId);
         expectLastCall().andAnswer(new IAnswer<Object>() {
             @Override
@@ -212,14 +215,13 @@ public class SwitchTrackingServiceTest extends EasyMockSupport {
 
     private Capture<Message> prepareAliveSwitchEvent(SpeakerSwitchView switchView) throws Exception {
         IOFSwitch sw = createMock(IOFSwitch.class);
-
         expect(sw.getId()).andReturn(dpId).anyTimes();
         expect(sw.getInetAddress())
-                .andReturn(new InetSocketAddress(switchIpAddress, 32769));
+                .andReturn(new InetSocketAddress(InetAddress.getByName("127.0.1.1"), 6653));
 
         OFConnection connect = createMock(OFConnection.class);
         expect(connect.getRemoteInetAddress())
-                .andReturn(new InetSocketAddress(Inet4Address.getByName("127.0.1.1"), 6653));
+                .andReturn(new InetSocketAddress(InetAddress.getByName("127.0.1.2"), 32769));
         expect(sw.getConnectionByCategory(eq(LogicalOFMessageCategory.MAIN))).andReturn(connect);
 
         SwitchDescription description = createMock(SwitchDescription.class);
@@ -344,6 +346,7 @@ public class SwitchTrackingServiceTest extends EasyMockSupport {
         expectedMessages.add(new InfoMessage(
                 new NetworkDumpSwitchData(new SpeakerSwitchView(
                         new SwitchId(swAid.getLong()),
+                        Inet4Address.getByName("127.0.2.1"),
                         ImmutableSet.of(SpeakerSwitchView.Feature.METERS),
                         ImmutableList.of(
                                 new SpeakerSwitchPortView(1, SpeakerSwitchPortView.State.UP),
@@ -352,7 +355,7 @@ public class SwitchTrackingServiceTest extends EasyMockSupport {
                 new NetworkDumpSwitchData(new SpeakerSwitchView(
                         new SwitchId(swBid.getLong()),
                         Inet4Address.getByName("127.0.2.2"),
-                        ImmutableSet.of(Switch.Feature.METERS, Switch.Feature.BFD),
+                        ImmutableSet.of(SpeakerSwitchView.Feature.METERS, SpeakerSwitchView.Feature.BFD),
                         ImmutableList.of(
                                 new SpeakerSwitchPortView(3, SpeakerSwitchPortView.State.UP),
                                 new SpeakerSwitchPortView(4, SpeakerSwitchPortView.State.UP),
@@ -362,7 +365,8 @@ public class SwitchTrackingServiceTest extends EasyMockSupport {
         assertEquals(expectedMessages, producedMessages);
     }
 
-    private SpeakerSwitchView makeSwitchRecord(DatapathId datapath, Set<SpeakerSwitchView.Feature> features, boolean... portState) {
+    private SpeakerSwitchView makeSwitchRecord(DatapathId datapath, Set<SpeakerSwitchView.Feature> features,
+                                               boolean... portState) {
         List<SpeakerSwitchPortView> ports = new ArrayList<>(portState.length);
         for (int idx = 0; idx < portState.length; idx++) {
             ports.add(new SpeakerSwitchPortView(idx + 1,
@@ -370,7 +374,7 @@ public class SwitchTrackingServiceTest extends EasyMockSupport {
                                                         ? SpeakerSwitchPortView.State.UP
                                                         : SpeakerSwitchPortView.State.DOWN));
         }
-        return new SpeakerSwitchView(new SwitchId(datapath.getLong()), features, ports);
+        return new SpeakerSwitchView(new SwitchId(datapath.getLong()), switchIpAddress, features, ports);
     }
 
     private OFPortDesc makePhysicalPortMock(int number, boolean isEnabled) {

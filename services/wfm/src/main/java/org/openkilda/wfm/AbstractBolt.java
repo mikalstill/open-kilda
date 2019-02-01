@@ -51,14 +51,20 @@ public abstract class AbstractBolt extends BaseRichBolt {
         }
     }
 
-    void emit(Tuple anchor, List<Object> payload) {
+    protected void emit(Tuple anchor, List<Object> payload) {
         log.debug("emit tuple into default stream: {}", payload);
         output.emit(anchor, payload);
     }
 
-    void emit(String stream, Tuple anchor, List<Object> payload) {
+    protected void emit(String stream, Tuple anchor, List<Object> payload) {
         log.debug("emit tuple into {} stream: {}", stream, payload);
         output.emit(stream, anchor, payload);
+    }
+
+    // FIXME(surabujin): rewrite emit usage in discovery bolts
+    protected void emit(String stream, Tuple input, Values values) throws PipelineException {
+        values.add(pullContext(input));
+        getOutput().emit(stream, input, values);
     }
 
     protected abstract void handleInput(Tuple input) throws AbstractException;
@@ -105,11 +111,6 @@ public abstract class AbstractBolt extends BaseRichBolt {
 
     protected OutputCollector getOutput() {
         return output;
-    }
-
-    protected void emit(String stream, Tuple input, Values values) throws PipelineException {
-        values.add(pullContext(input));
-        getOutput().emit(stream, input, values);
     }
 
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
