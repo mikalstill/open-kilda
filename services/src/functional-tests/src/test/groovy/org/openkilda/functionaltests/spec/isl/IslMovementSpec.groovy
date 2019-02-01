@@ -13,7 +13,6 @@ import org.openkilda.functionaltests.helpers.Wrappers
 import org.openkilda.testing.Constants.DefaultRule
 import org.openkilda.testing.model.topology.TopologyDefinition
 import org.openkilda.testing.model.topology.TopologyDefinition.Isl
-import org.openkilda.testing.service.lockkeeper.model.ASwitchFlow
 
 import spock.lang.Narrative
 
@@ -121,8 +120,6 @@ class IslMovementSpec extends BaseSpecification {
         statsData.values().last().toLong() > dropCounterBefore
 
         and: "Unplug the link how it was before"
-        lockKeeper.removeFlows([
-                new ASwitchFlow(expectedIsl.aswitch.getInPort(), expectedIsl.aswitch.getOutPort()),
-                new ASwitchFlow(expectedIsl.aswitch.getOutPort(), expectedIsl.aswitch.getInPort())])
+        lockKeeper.removeFlows([expectedIsl.aswitch, expectedIsl.aswitch.reversed])
     }
 }

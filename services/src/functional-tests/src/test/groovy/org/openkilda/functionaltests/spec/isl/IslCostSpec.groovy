@@ -13,13 +13,12 @@ class IslCostSpec extends BaseSpecification {
     def "ISL cost is NOT increased due to connection loss between switches (not port down)"() {
         given: "ISL going through a-switch"
         def isl = topology.islsForActiveSwitches.find {
-            it.aswitch
+            it.aswitch?.inPort && it.aswitch?.outPort && !it.bfd
         } ?: assumeTrue("Wasn't able to find suitable ISL", false)
 
         when: "Remove a-switch rules to break link between switches"
         int islCost = islUtils.getIslCost(isl)
-        def rulesToRemove = [new ASwitchFlow(isl.aswitch.inPort, isl.aswitch.outPort),
-                             new ASwitchFlow(isl.aswitch.outPort, isl.aswitch.inPort)]
+        def rulesToRemove = [isl.aswitch, isl.aswitch.reversed]
 
         lockKeeper.removeFlows(rulesToRemove)
 
