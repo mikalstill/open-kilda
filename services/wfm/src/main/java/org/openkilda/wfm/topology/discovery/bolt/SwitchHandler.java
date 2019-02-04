@@ -17,9 +17,11 @@ package org.openkilda.wfm.topology.discovery.bolt;
 
 import org.openkilda.messaging.model.SpeakerSwitchView;
 import org.openkilda.model.Isl;
+import org.openkilda.persistence.PersistenceManager;
 import org.openkilda.wfm.AbstractBolt;
 import org.openkilda.wfm.AbstractOutputAdapter;
 import org.openkilda.wfm.error.PipelineException;
+import org.openkilda.wfm.topology.discovery.model.DiscoveryOptions;
 import org.openkilda.wfm.topology.discovery.model.Endpoint;
 import org.openkilda.wfm.topology.discovery.model.PortCommand;
 import org.openkilda.wfm.topology.discovery.model.PortFacts;
@@ -29,7 +31,7 @@ import org.openkilda.wfm.topology.discovery.model.PortRemoveCommand;
 import org.openkilda.wfm.topology.discovery.model.PortSetupCommand;
 import org.openkilda.wfm.topology.discovery.model.SpeakerSharedSync;
 import org.openkilda.wfm.topology.discovery.model.SwitchCommand;
-import org.openkilda.wfm.topology.discovery.service.DiscoveryServiceFactory;
+import org.openkilda.wfm.topology.discovery.service.DiscoverySwitchService;
 import org.openkilda.wfm.topology.discovery.service.ISwitchReply;
 
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -38,7 +40,7 @@ import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 import org.apache.storm.utils.Utils;
 
-public class SwitchHandler extends DiscoveryAbstractBolt {
+public class SwitchHandler extends AbstractBolt {
     public static final String BOLT_ID = ComponentId.SWITCH_HANDLER.toString();
 
     public static final String FIELD_ID_DATAPATH = SpeakerMonitor.FIELD_ID_DATAPATH;
@@ -53,8 +55,14 @@ public class SwitchHandler extends DiscoveryAbstractBolt {
     public static final Fields STREAM_BFD_PORT_FIELDS = new Fields(FIELD_ID_DATAPATH, FIELD_ID_COMMAND,
                                                                    FIELD_ID_CONTEXT);
 
-    public SwitchHandler(DiscoveryServiceFactory serviceFactory) {
-        super(serviceFactory);
+    private final DiscoveryOptions options;
+    private final PersistenceManager persistenceManager;
+
+    private transient DiscoverySwitchService service;
+
+    public SwitchHandler(DiscoveryOptions options, PersistenceManager persistenceManager) {
+        this.options = options;
+        this.persistenceManager = persistenceManager;
     }
 
     @Override
@@ -63,7 +71,7 @@ public class SwitchHandler extends DiscoveryAbstractBolt {
 
         if (SpeakerMonitor.BOLT_ID.equals(source)) {
             handleSpeakerInput(input);
-        } else if (NetworkPreloader.SPOUT_ID.equals(source)) {
+        } else if (NetworkHistorySpout.SPOUT_ID.equals(source)) {
             handlePreloaderInput(input);
         } else {
             unhandledInput(input);
@@ -85,23 +93,28 @@ public class SwitchHandler extends DiscoveryAbstractBolt {
     }
 
     private void handlePreloaderInput(Tuple input) throws PipelineException {
-        SwitchCommand command = pullValue(input, NetworkPreloader.FIELD_ID_PAYLOAD, SwitchCommand.class);
-        command.apply(discoveryService, new OutputAdapter(this, input));
+        SwitchCommand command = pullValue(input, NetworkHistorySpout.FIELD_ID_PAYLOAD, SwitchCommand.class);
+        command.apply(service, new OutputAdapter(this, input));
     }
 
     private void handleSpeakerMainStream(Tuple input) throws PipelineException {
         SwitchCommand command = pullValue(input, SpeakerMonitor.FIELD_ID_INPUT, SwitchCommand.class);
-        command.apply(discoveryService, new OutputAdapter(this, input));
+        command.apply(service, new OutputAdapter(this, input));
     }
 
     private void handleSpeakerRefreshStream(Tuple input) throws PipelineException {
         SpeakerSwitchView switchView = pullValue(input, SpeakerMonitor.FIELD_ID_REFRESH, SpeakerSwitchView.class);
-        discoveryService.switchRestoreManagement(switchView, new OutputAdapter(this, input));
+        service.switchRestoreManagement(switchView, new OutputAdapter(this, input));
     }
 
     private void handleSpeakerSyncStream(Tuple input) throws PipelineException {
         SpeakerSharedSync sharedSync = pullValue(input, SpeakerMonitor.FIELD_ID_SYNC, SpeakerSharedSync.class);
-        discoveryService.switchSharedSync(sharedSync, new OutputAdapter(this, input));
+        service.switchSharedSync(sharedSync, new OutputAdapter(this, input));
+    }
+
+    @Override
+    protected void init() {
+        service = new DiscoverySwitchService(options, persistenceManager);
     }
 
     @Override

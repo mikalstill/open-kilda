@@ -15,7 +15,7 @@
 
 package org.openkilda.wfm.topology.discovery.model;
 
-import org.openkilda.wfm.topology.discovery.service.DiscoveryService;
+import org.openkilda.wfm.topology.discovery.service.DiscoveryIslService;
 import org.openkilda.wfm.topology.discovery.service.IIslReply;
 
 public class IslDownCommand extends IslCommand {
@@ -24,7 +24,7 @@ public class IslDownCommand extends IslCommand {
     }
 
     @Override
-    public void apply(DiscoveryService service, IIslReply output) {
+    public void apply(DiscoveryIslService service, IIslReply output) {
         service.islDown(getEndpoint(), getReference(), output);
     }
 }

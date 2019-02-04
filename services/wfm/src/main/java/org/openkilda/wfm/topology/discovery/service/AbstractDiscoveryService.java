@@ -15,24 +15,12 @@
 
 package org.openkilda.wfm.topology.discovery.service;
 
-import org.openkilda.persistence.PersistenceManager;
 import org.openkilda.wfm.topology.discovery.model.DiscoveryOptions;
 
-import java.io.Serializable;
+public abstract class AbstractDiscoveryService {
+    protected final DiscoveryOptions options;
 
-/**
- * Unify {@link DiscoveryService} creation process.
- */
-public class DiscoveryServiceFactory implements Serializable {
-    private final PersistenceManager persistenceManager;
-    private final DiscoveryOptions options;
-
-    public DiscoveryServiceFactory(DiscoveryOptions options, PersistenceManager persistenceManager) {
-        this.persistenceManager = persistenceManager;
+    public AbstractDiscoveryService(DiscoveryOptions options) {
         this.options = options;
-    }
-
-    public DiscoveryService produce() {
-        return new DiscoveryService(persistenceManager, options);
     }
 }

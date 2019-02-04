@@ -15,8 +15,6 @@
 
 package org.openkilda.wfm.topology.discovery.model;
 
-import org.openkilda.wfm.topology.discovery.service.DiscoveryService;
-
-public interface ICommand<R> {
-    void apply(DiscoveryService service, R output);
+public interface ICommand<S, R> {
+    void apply(S service, R output);
 }

@@ -15,12 +15,13 @@
 
 package org.openkilda.wfm.topology.discovery.model;
 
+import org.openkilda.wfm.topology.discovery.service.DiscoveryIslService;
 import org.openkilda.wfm.topology.discovery.service.IIslReply;
 
 import lombok.AccessLevel;
 import lombok.Getter;
 
-public abstract class IslCommand implements ICommand<IIslReply> {
+public abstract class IslCommand implements ICommand<DiscoveryIslService, IIslReply> {
     @Getter(AccessLevel.PROTECTED)
     private final Endpoint endpoint;
 

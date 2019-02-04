@@ -15,16 +15,18 @@
 
 package org.openkilda.wfm.topology.discovery.bolt;
 
+import org.openkilda.persistence.PersistenceManager;
 import org.openkilda.wfm.AbstractBolt;
 import org.openkilda.wfm.AbstractOutputAdapter;
 import org.openkilda.wfm.error.AbstractException;
 import org.openkilda.wfm.error.PipelineException;
 import org.openkilda.wfm.topology.discovery.model.BfdPortBiIslUpCommand;
 import org.openkilda.wfm.topology.discovery.model.BfdPortCommand;
+import org.openkilda.wfm.topology.discovery.model.DiscoveryOptions;
 import org.openkilda.wfm.topology.discovery.model.Endpoint;
 import org.openkilda.wfm.topology.discovery.model.IslCommand;
 import org.openkilda.wfm.topology.discovery.model.IslReference;
-import org.openkilda.wfm.topology.discovery.service.DiscoveryServiceFactory;
+import org.openkilda.wfm.topology.discovery.service.DiscoveryIslService;
 import org.openkilda.wfm.topology.discovery.service.IIslReply;
 
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -32,7 +34,7 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 
-public class IslHandler extends DiscoveryAbstractBolt {
+public class IslHandler extends AbstractBolt {
     public static final String BOLT_ID = ComponentId.ISL_HANDLER.toString();
 
     public static final String FIELD_ID_DATAPATH = "datapath";
@@ -42,8 +44,14 @@ public class IslHandler extends DiscoveryAbstractBolt {
     public static final Fields STREAM_BFD_PORT_FIELDS = new Fields(FIELD_ID_DATAPATH,
                                                                    FIELD_ID_COMMAND, FIELD_ID_CONTEXT);
 
-    public IslHandler(DiscoveryServiceFactory serviceFactory) {
-        super(serviceFactory);
+    private final DiscoveryOptions options;
+    private final PersistenceManager persistenceManager;
+
+    private transient DiscoveryIslService service;
+
+    public IslHandler(DiscoveryOptions options, PersistenceManager persistenceManager) {
+        this.options = options;
+        this.persistenceManager = persistenceManager;
     }
 
     @Override
@@ -58,7 +66,12 @@ public class IslHandler extends DiscoveryAbstractBolt {
 
     private void handleUniIslCommand(Tuple input) throws PipelineException {
         IslCommand command = pullValue(input, UniIslHandler.FIELD_ID_COMMAND, IslCommand.class);
-        command.apply(discoveryService, new OutputAdapter(this, input));
+        command.apply(service, new OutputAdapter(this, input));
+    }
+
+    @Override
+    protected void init() {
+        service = new DiscoveryIslService(options, persistenceManager);
     }
 
     @Override

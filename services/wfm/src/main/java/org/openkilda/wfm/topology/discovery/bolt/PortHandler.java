@@ -20,12 +20,13 @@ import org.openkilda.wfm.AbstractBolt;
 import org.openkilda.wfm.AbstractOutputAdapter;
 import org.openkilda.wfm.error.AbstractException;
 import org.openkilda.wfm.error.PipelineException;
+import org.openkilda.wfm.topology.discovery.model.DiscoveryOptions;
 import org.openkilda.wfm.topology.discovery.model.Endpoint;
 import org.openkilda.wfm.topology.discovery.model.PortCommand;
 import org.openkilda.wfm.topology.discovery.model.UniIslCommand;
 import org.openkilda.wfm.topology.discovery.model.UniIslPhysicalDownCommand;
 import org.openkilda.wfm.topology.discovery.model.UniIslSetupCommand;
-import org.openkilda.wfm.topology.discovery.service.DiscoveryServiceFactory;
+import org.openkilda.wfm.topology.discovery.service.DiscoveryPortService;
 import org.openkilda.wfm.topology.discovery.service.IPortReply;
 
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -33,7 +34,7 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 
-public class PortHandler extends DiscoveryAbstractBolt {
+public class PortHandler extends AbstractBolt {
     public static final String BOLT_ID = ComponentId.PORT_HANDLER.toString();
 
     public static final String FIELD_ID_DATAPATH = SwitchHandler.FIELD_ID_DATAPATH;
@@ -47,8 +48,12 @@ public class PortHandler extends DiscoveryAbstractBolt {
     public static final Fields STREAM_POLL_FIELDS = new Fields(FIELD_ID_DATAPATH, FIELD_ID_PORT_NUMBER,
                                                                FIELD_ID_COMMAND, FIELD_ID_CONTEXT);
 
-    public PortHandler(DiscoveryServiceFactory serviceFactory) {
-        super(serviceFactory);
+    private final DiscoveryOptions options;
+
+    private transient DiscoveryPortService service;
+
+    public PortHandler(DiscoveryOptions options) {
+        this.options = options;
     }
 
     @Override
@@ -64,7 +69,12 @@ public class PortHandler extends DiscoveryAbstractBolt {
     private void handleSwitchCommand(Tuple input) throws PipelineException {
         PortCommand command = pullValue(input, SwitchHandler.FIELD_ID_COMMAND, PortCommand.class);
         OutputAdapter outputAdapter = new OutputAdapter(this, input);
-        command.apply(discoveryService, outputAdapter);
+        command.apply(service, outputAdapter);
+    }
+
+    @Override
+    protected void init() {
+        service = new DiscoveryPortService(options);
     }
 
     @Override

@@ -15,11 +15,12 @@
 
 package org.openkilda.wfm.topology.discovery.model;
 
+import org.openkilda.wfm.topology.discovery.service.DiscoveryBfdPortService;
 import org.openkilda.wfm.topology.discovery.service.IBfdPortReply;
 
 import lombok.Getter;
 
-public abstract class BfdPortCommand implements ICommand<IBfdPortReply> {
+public abstract class BfdPortCommand implements ICommand<DiscoveryBfdPortService, IBfdPortReply> {
     @Getter
     private final Endpoint endpoint;
 

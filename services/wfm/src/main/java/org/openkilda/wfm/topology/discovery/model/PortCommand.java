@@ -16,11 +16,12 @@
 package org.openkilda.wfm.topology.discovery.model;
 
 import org.openkilda.model.SwitchId;
+import org.openkilda.wfm.topology.discovery.service.DiscoveryPortService;
 import org.openkilda.wfm.topology.discovery.service.IPortReply;
 
 import lombok.Getter;
 
-public abstract class PortCommand implements ICommand<IPortReply> {
+public abstract class PortCommand implements ICommand<DiscoveryPortService, IPortReply> {
     @Getter
     private final Endpoint endpoint;
 

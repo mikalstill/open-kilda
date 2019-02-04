@@ -15,7 +15,7 @@
 
 package org.openkilda.wfm.topology.discovery.model;
 
-import org.openkilda.wfm.topology.discovery.service.DiscoveryService;
+import org.openkilda.wfm.topology.discovery.service.DiscoveryPortService;
 import org.openkilda.wfm.topology.discovery.service.IPortReply;
 
 public class PortRemoveCommand extends PortCommand {
@@ -24,7 +24,7 @@ public class PortRemoveCommand extends PortCommand {
     }
 
     @Override
-    public void apply(DiscoveryService service, IPortReply output) {
+    public void apply(DiscoveryPortService service, IPortReply output) {
         service.portRemove(getEndpoint(), output);
     }
 }

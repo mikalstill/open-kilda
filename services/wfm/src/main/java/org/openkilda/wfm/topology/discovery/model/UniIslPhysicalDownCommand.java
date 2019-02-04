@@ -15,7 +15,7 @@
 
 package org.openkilda.wfm.topology.discovery.model;
 
-import org.openkilda.wfm.topology.discovery.service.DiscoveryService;
+import org.openkilda.wfm.topology.discovery.service.DiscoveryUniIslService;
 import org.openkilda.wfm.topology.discovery.service.IUniIslReply;
 
 public class UniIslPhysicalDownCommand extends UniIslCommand {
@@ -24,7 +24,7 @@ public class UniIslPhysicalDownCommand extends UniIslCommand {
     }
 
     @Override
-    public void apply(DiscoveryService service, IUniIslReply output) {
+    public void apply(DiscoveryUniIslService service, IUniIslReply output) {
         service.uniIslPhysicalDown(getEndpoint(), output);
     }
 }

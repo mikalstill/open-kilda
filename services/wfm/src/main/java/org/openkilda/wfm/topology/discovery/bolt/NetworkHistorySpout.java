@@ -16,11 +16,12 @@
 package org.openkilda.wfm.topology.discovery.bolt;
 
 import org.openkilda.model.SwitchId;
+import org.openkilda.persistence.PersistenceManager;
 import org.openkilda.wfm.CommandContext;
+import org.openkilda.wfm.topology.discovery.model.DiscoveryOptions;
 import org.openkilda.wfm.topology.discovery.model.SwitchHistory;
 import org.openkilda.wfm.topology.discovery.model.SwitchHistoryCommand;
-import org.openkilda.wfm.topology.discovery.service.DiscoveryService;
-import org.openkilda.wfm.topology.discovery.service.DiscoveryServiceFactory;
+import org.openkilda.wfm.topology.discovery.service.DiscoveryHistoryService;
 import org.openkilda.wfm.topology.discovery.service.ISwitchPrepopulateReply;
 
 import org.apache.storm.spout.SpoutOutputCollector;
@@ -32,7 +33,7 @@ import org.apache.storm.tuple.Values;
 
 import java.util.Map;
 
-public class NetworkPreloader extends BaseRichSpout {
+public class NetworkHistorySpout extends BaseRichSpout {
     public static final String SPOUT_ID = ComponentId.NETWORK_PRELOADER.toString();
 
     public static final String FIELD_ID_DATAPATH = SpeakerMonitor.FIELD_ID_DATAPATH;
@@ -40,14 +41,17 @@ public class NetworkPreloader extends BaseRichSpout {
 
     public static final Fields STREAM_FIELDS = new Fields(FIELD_ID_DATAPATH, FIELD_ID_PAYLOAD);
 
-    private final DiscoveryServiceFactory serviceFactory;
-    private transient DiscoveryService discovery;
+    private final DiscoveryOptions options;
+    private final PersistenceManager persistenceManager;
+
+    private transient DiscoveryHistoryService service;
     private transient SpoutOutputCollector output;
 
     private boolean workDone = false;
 
-    public NetworkPreloader(DiscoveryServiceFactory serviceFactory) {
-        this.serviceFactory = serviceFactory;
+    public NetworkHistorySpout(DiscoveryOptions options, PersistenceManager persistenceManager) {
+        this.options = options;
+        this.persistenceManager = persistenceManager;
     }
 
     @Override
@@ -58,13 +62,13 @@ public class NetworkPreloader extends BaseRichSpout {
         }
         workDone = true;
 
-        discovery.prepopulate(new OutputAdapter(output));
+        service.applyHistory(new OutputAdapter(output));
     }
 
     @Override
     public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
         output = collector;
-        discovery = serviceFactory.produce();
+        service = new DiscoveryHistoryService(options, persistenceManager);
     }
 
     @Override

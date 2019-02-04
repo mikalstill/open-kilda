@@ -15,12 +15,13 @@
 
 package org.openkilda.wfm.topology.discovery.model;
 
+import org.openkilda.wfm.topology.discovery.service.DiscoveryUniIslService;
 import org.openkilda.wfm.topology.discovery.service.IUniIslReply;
 
 import lombok.AccessLevel;
 import lombok.Getter;
 
-public abstract class UniIslCommand implements ICommand<IUniIslReply> {
+public abstract class UniIslCommand implements ICommand<DiscoveryUniIslService, IUniIslReply> {
     @Getter(AccessLevel.PUBLIC)
     private final Endpoint endpoint;
 

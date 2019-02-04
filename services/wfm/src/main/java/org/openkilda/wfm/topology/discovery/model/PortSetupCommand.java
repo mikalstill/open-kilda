@@ -16,7 +16,7 @@
 package org.openkilda.wfm.topology.discovery.model;
 
 import org.openkilda.model.Isl;
-import org.openkilda.wfm.topology.discovery.service.DiscoveryService;
+import org.openkilda.wfm.topology.discovery.service.DiscoveryPortService;
 import org.openkilda.wfm.topology.discovery.service.IPortReply;
 
 public class PortSetupCommand extends PortCommand {
@@ -34,7 +34,7 @@ public class PortSetupCommand extends PortCommand {
     }
 
     @Override
-    public void apply(DiscoveryService service, IPortReply output) {
+    public void apply(DiscoveryPortService service, IPortReply output) {
         service.portSetup(facts, history, output);
     }
 }

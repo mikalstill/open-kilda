@@ -16,15 +16,16 @@
 package org.openkilda.wfm.topology.discovery.model;
 
 import org.openkilda.model.SwitchId;
+import org.openkilda.wfm.topology.discovery.service.DiscoverySwitchService;
 import org.openkilda.wfm.topology.discovery.service.ISwitchReply;
 
 import lombok.Getter;
 
-public abstract class SwitchCommand implements ICommand<ISwitchReply> {
+public abstract class SwitchCommand implements ICommand<DiscoverySwitchService, ISwitchReply> {
     @Getter
     private final SwitchId datapath;
 
-    public SwitchCommand(SwitchId datapath) {
+    protected SwitchCommand(SwitchId datapath) {
         this.datapath = datapath;
     }
 }

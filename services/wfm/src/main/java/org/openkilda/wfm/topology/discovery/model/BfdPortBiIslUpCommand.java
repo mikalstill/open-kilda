@@ -15,7 +15,7 @@
 
 package org.openkilda.wfm.topology.discovery.model;
 
-import org.openkilda.wfm.topology.discovery.service.DiscoveryService;
+import org.openkilda.wfm.topology.discovery.service.DiscoveryBfdPortService;
 import org.openkilda.wfm.topology.discovery.service.IBfdPortReply;
 
 public class BfdPortBiIslUpCommand extends BfdPortCommand {
@@ -27,7 +27,7 @@ public class BfdPortBiIslUpCommand extends BfdPortCommand {
     }
 
     @Override
-    public void apply(DiscoveryService service, IBfdPortReply output) {
+    public void apply(DiscoveryBfdPortService service, IBfdPortReply output) {
         // TODO
     }
 }

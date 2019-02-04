@@ -21,7 +21,8 @@ import org.openkilda.wfm.error.AbstractException;
 import org.openkilda.wfm.error.PipelineException;
 import org.openkilda.wfm.topology.discovery.model.BfdPortCommand;
 import org.openkilda.wfm.topology.discovery.model.BfdSpeakerWorkerCommand;
-import org.openkilda.wfm.topology.discovery.service.DiscoveryServiceFactory;
+import org.openkilda.wfm.topology.discovery.model.DiscoveryOptions;
+import org.openkilda.wfm.topology.discovery.service.DiscoveryBfdPortService;
 import org.openkilda.wfm.topology.discovery.service.IBfdPortReply;
 import org.openkilda.wfm.topology.utils.MessageTranslator;
 
@@ -30,7 +31,7 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 
-public class BfdPortHandler extends DiscoveryAbstractBolt {
+public class BfdPortHandler extends AbstractBolt {
     public static final String BOLT_ID = ComponentId.BFD_PORT_HANDLER.toString();
 
     public static final String FIELD_ID_COMMAND_KEY = MessageTranslator.KEY_FIELD;
@@ -40,8 +41,12 @@ public class BfdPortHandler extends DiscoveryAbstractBolt {
     public static final Fields STREAM_SPEAKER_FIELDS = new Fields(FIELD_ID_COMMAND_KEY, FIELD_ID_COMMAND,
                                                                   FIELD_ID_CONTEXT);
 
-    public BfdPortHandler(DiscoveryServiceFactory serviceFactory) {
-        super(serviceFactory);
+    private final DiscoveryOptions options;
+
+    private transient DiscoveryBfdPortService service;
+
+    public BfdPortHandler(DiscoveryOptions options) {
+        this.options = options;
     }
 
     @Override
@@ -66,7 +71,12 @@ public class BfdPortHandler extends DiscoveryAbstractBolt {
 
     private void handleCommand(Tuple input, String fieldName) throws PipelineException {
         BfdPortCommand command = pullValue(input, fieldName, BfdPortCommand.class);
-        command.apply(discoveryService, new OutputAdapter(this, input));
+        command.apply(service, new OutputAdapter(this, input));
+    }
+
+    @Override
+    protected void init() {
+        service = new DiscoveryBfdPortService(options);
     }
 
     @Override

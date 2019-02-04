@@ -16,7 +16,7 @@
 package org.openkilda.wfm.topology.discovery.model;
 
 import org.openkilda.messaging.info.event.IslInfoData;
-import org.openkilda.wfm.topology.discovery.service.DiscoveryService;
+import org.openkilda.wfm.topology.discovery.service.DiscoverySwitchService;
 import org.openkilda.wfm.topology.discovery.service.ISwitchReply;
 
 public class DiscoveryEventCommand extends SwitchCommand {
@@ -28,7 +28,7 @@ public class DiscoveryEventCommand extends SwitchCommand {
     }
 
     @Override
-    public void apply(DiscoveryService service, ISwitchReply output) {
+    public void apply(DiscoverySwitchService service, ISwitchReply output) {
         // TODO
     }
 }

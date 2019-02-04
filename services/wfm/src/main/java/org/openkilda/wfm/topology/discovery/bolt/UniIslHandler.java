@@ -20,6 +20,7 @@ import org.openkilda.wfm.AbstractOutputAdapter;
 import org.openkilda.wfm.error.AbstractException;
 import org.openkilda.wfm.error.PipelineException;
 import org.openkilda.wfm.topology.discovery.model.DiscoveryFacts;
+import org.openkilda.wfm.topology.discovery.model.DiscoveryOptions;
 import org.openkilda.wfm.topology.discovery.model.Endpoint;
 import org.openkilda.wfm.topology.discovery.model.IslCommand;
 import org.openkilda.wfm.topology.discovery.model.IslDownCommand;
@@ -27,7 +28,7 @@ import org.openkilda.wfm.topology.discovery.model.IslMoveCommand;
 import org.openkilda.wfm.topology.discovery.model.IslReference;
 import org.openkilda.wfm.topology.discovery.model.IslUpCommand;
 import org.openkilda.wfm.topology.discovery.model.UniIslCommand;
-import org.openkilda.wfm.topology.discovery.service.DiscoveryServiceFactory;
+import org.openkilda.wfm.topology.discovery.service.DiscoveryUniIslService;
 import org.openkilda.wfm.topology.discovery.service.IUniIslReply;
 
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -35,7 +36,7 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 
-public class UniIslHandler extends DiscoveryAbstractBolt {
+public class UniIslHandler extends AbstractBolt {
     public static final String BOLT_ID = ComponentId.UNI_ISL_HANDLER.toString();
 
     public static final String FIELD_ID_ISL_SOURCE = "isl-source";
@@ -45,8 +46,12 @@ public class UniIslHandler extends DiscoveryAbstractBolt {
     public static final Fields STREAM_FIELDS = new Fields(FIELD_ID_ISL_SOURCE, FIELD_ID_ISL_DEST,
                                                            FIELD_ID_COMMAND, FIELD_ID_CONTEXT);
 
-    public UniIslHandler(DiscoveryServiceFactory serviceFactory) {
-        super(serviceFactory);
+    private final DiscoveryOptions options;
+
+    private transient DiscoveryUniIslService service;
+
+    public UniIslHandler(DiscoveryOptions options) {
+        this.options = options;
     }
 
     @Override
@@ -62,7 +67,12 @@ public class UniIslHandler extends DiscoveryAbstractBolt {
 
     private void handlePortCommand(Tuple input) throws PipelineException {
         UniIslCommand command = pullValue(input, PortHandler.FIELD_ID_COMMAND, UniIslCommand.class);
-        command.apply(discoveryService, new OutputAdapter(this, input));
+        command.apply(service, new OutputAdapter(this, input));
+    }
+
+    @Override
+    protected void init() {
+        service = new DiscoveryUniIslService(options);
     }
 
     @Override
