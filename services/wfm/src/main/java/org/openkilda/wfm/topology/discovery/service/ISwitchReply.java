@@ -17,7 +17,7 @@ package org.openkilda.wfm.topology.discovery.service;
 
 import org.openkilda.model.Isl;
 import org.openkilda.wfm.topology.discovery.model.Endpoint;
-import org.openkilda.wfm.topology.discovery.model.PortFacts;
+import org.openkilda.wfm.topology.discovery.model.facts.PortFacts;
 
 public interface ISwitchReply {
     void setupPortHandler(PortFacts portFacts);

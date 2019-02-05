@@ -28,7 +28,7 @@ import org.openkilda.wfm.topology.discovery.controller.SwitchFsmState;
 import org.openkilda.wfm.topology.discovery.model.DiscoveryOptions;
 import org.openkilda.wfm.topology.discovery.model.OperationMode;
 import org.openkilda.wfm.topology.discovery.model.SpeakerSharedSync;
-import org.openkilda.wfm.topology.discovery.model.SwitchHistory;
+import org.openkilda.wfm.topology.discovery.model.facts.HistoryFacts;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -54,7 +54,7 @@ public class DiscoverySwitchService extends AbstractDiscoveryService {
     /**
      * .
      */
-    public void switchAddWithHistory(SwitchHistory history, ISwitchReply outputAdapter) {
+    public void switchAddWithHistory(HistoryFacts history, ISwitchReply outputAdapter) {
         SwitchFsm switchFsm = SwitchFsm.create(history.getSwitchId(), options);
 
         SwitchFsmContext fsmContext = new SwitchFsmContext(outputAdapter);

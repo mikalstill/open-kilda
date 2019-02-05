@@ -15,7 +15,7 @@
 
 package org.openkilda.wfm.topology.discovery.controller;
 
-import org.openkilda.wfm.topology.discovery.model.DiscoveryFacts;
+import org.openkilda.wfm.topology.discovery.model.facts.DiscoveryFacts;
 import org.openkilda.wfm.topology.discovery.model.Endpoint;
 import org.openkilda.wfm.topology.discovery.service.IIslReply;
 

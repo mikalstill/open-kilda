@@ -16,7 +16,7 @@
 package org.openkilda.wfm.topology.discovery.service;
 
 import org.openkilda.wfm.topology.discovery.model.Endpoint;
-import org.openkilda.wfm.topology.discovery.model.IslReference;
+import org.openkilda.wfm.topology.discovery.storm.bolt.isl.command.IslReference;
 
 public interface IIslReply {
     void notifyBiIslUp(Endpoint endpoint, IslReference reference);

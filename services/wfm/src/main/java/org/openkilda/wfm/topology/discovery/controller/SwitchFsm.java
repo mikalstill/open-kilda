@@ -22,9 +22,9 @@ import org.openkilda.model.SwitchId;
 import org.openkilda.wfm.share.utils.FsmExecutor;
 import org.openkilda.wfm.topology.discovery.model.DiscoveryOptions;
 import org.openkilda.wfm.topology.discovery.model.Endpoint;
-import org.openkilda.wfm.topology.discovery.model.PortFacts;
-import org.openkilda.wfm.topology.discovery.model.PortFacts.LinkStatus;
-import org.openkilda.wfm.topology.discovery.model.SwitchHistory;
+import org.openkilda.wfm.topology.discovery.model.facts.PortFacts;
+import org.openkilda.wfm.topology.discovery.model.facts.PortFacts.LinkStatus;
+import org.openkilda.wfm.topology.discovery.model.facts.HistoryFacts;
 import org.openkilda.wfm.topology.discovery.service.ISwitchReply;
 
 import lombok.extern.slf4j.Slf4j;
@@ -102,8 +102,8 @@ public final class SwitchFsm extends AbstractStateMachine<SwitchFsm, SwitchFsmSt
     // -- FSM actions --
 
     private void applyHistory(SwitchFsmState from, SwitchFsmState to, SwitchFsmEvent event, SwitchFsmContext context) {
-        SwitchHistory switchHistory = context.getHistory();
-        for (Isl outgoingLink : switchHistory.getOutgoingLinks()) {
+        HistoryFacts historyFacts = context.getHistory();
+        for (Isl outgoingLink : historyFacts.getOutgoingLinks()) {
             portAdd(context, outgoingLink);
         }
     }

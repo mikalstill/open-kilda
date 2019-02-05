@@ -21,10 +21,10 @@ import org.openkilda.wfm.topology.discovery.controller.IslFsm;
 import org.openkilda.wfm.topology.discovery.controller.IslFsmContext;
 import org.openkilda.wfm.topology.discovery.controller.IslFsmEvent;
 import org.openkilda.wfm.topology.discovery.controller.IslFsmState;
-import org.openkilda.wfm.topology.discovery.model.DiscoveryFacts;
+import org.openkilda.wfm.topology.discovery.model.facts.DiscoveryFacts;
 import org.openkilda.wfm.topology.discovery.model.DiscoveryOptions;
 import org.openkilda.wfm.topology.discovery.model.Endpoint;
-import org.openkilda.wfm.topology.discovery.model.IslReference;
+import org.openkilda.wfm.topology.discovery.storm.bolt.isl.command.IslReference;
 
 import java.util.HashMap;
 import java.util.Map;

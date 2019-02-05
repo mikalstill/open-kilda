@@ -18,6 +18,7 @@ package org.openkilda.wfm.topology.discovery.model;
 import org.openkilda.messaging.info.event.IslInfoData;
 import org.openkilda.wfm.topology.discovery.service.DiscoverySwitchService;
 import org.openkilda.wfm.topology.discovery.service.ISwitchReply;
+import org.openkilda.wfm.topology.discovery.storm.bolt.sw.command.SwitchCommand;
 
 public class DiscoveryEventCommand extends SwitchCommand {
     private final IslInfoData payload;

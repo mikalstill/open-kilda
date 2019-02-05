@@ -15,8 +15,8 @@
 
 package org.openkilda.wfm.topology.discovery.service;
 
-import org.openkilda.wfm.topology.discovery.model.SwitchHistory;
+import org.openkilda.wfm.topology.discovery.model.facts.HistoryFacts;
 
 public interface ISwitchPrepopulateReply {
-    void switchAddWithHistory(SwitchHistory switchHistory);
+    void switchAddWithHistory(HistoryFacts historyFacts);
 }

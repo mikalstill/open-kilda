@@ -21,18 +21,18 @@ import org.openkilda.wfm.LaunchEnvironment;
 import org.openkilda.wfm.share.hubandspoke.CoordinatorBolt;
 import org.openkilda.wfm.share.hubandspoke.CoordinatorSpout;
 import org.openkilda.wfm.topology.AbstractTopology;
-import org.openkilda.wfm.topology.discovery.bolt.BfdPortHandler;
-import org.openkilda.wfm.topology.discovery.bolt.BfdSpeakerWorker;
-import org.openkilda.wfm.topology.discovery.bolt.ComponentId;
-import org.openkilda.wfm.topology.discovery.bolt.InputDecoder;
-import org.openkilda.wfm.topology.discovery.bolt.IslHandler;
-import org.openkilda.wfm.topology.discovery.bolt.MonotonicTick;
-import org.openkilda.wfm.topology.discovery.bolt.NetworkHistorySpout;
-import org.openkilda.wfm.topology.discovery.bolt.PortHandler;
-import org.openkilda.wfm.topology.discovery.bolt.SpeakerEncoder;
-import org.openkilda.wfm.topology.discovery.bolt.SpeakerMonitor;
-import org.openkilda.wfm.topology.discovery.bolt.SwitchHandler;
-import org.openkilda.wfm.topology.discovery.bolt.UniIslHandler;
+import org.openkilda.wfm.topology.discovery.storm.bolt.bfdport.BfdPortHandler;
+import org.openkilda.wfm.topology.discovery.storm.bolt.BfdSpeakerWorker;
+import org.openkilda.wfm.topology.discovery.storm.ComponentId;
+import org.openkilda.wfm.topology.discovery.storm.bolt.InputDecoder;
+import org.openkilda.wfm.topology.discovery.storm.bolt.isl.IslHandler;
+import org.openkilda.wfm.topology.discovery.storm.bolt.MonotonicTick;
+import org.openkilda.wfm.topology.discovery.storm.spout.NetworkHistory;
+import org.openkilda.wfm.topology.discovery.storm.bolt.port.PortHandler;
+import org.openkilda.wfm.topology.discovery.storm.bolt.SpeakerEncoder;
+import org.openkilda.wfm.topology.discovery.storm.bolt.SpeakerMonitor;
+import org.openkilda.wfm.topology.discovery.storm.bolt.sw.SwitchHandler;
+import org.openkilda.wfm.topology.discovery.storm.bolt.uniisl.UniIslHandler;
 import org.openkilda.wfm.topology.discovery.model.DiscoveryOptions;
 import org.openkilda.wfm.topology.utils.MessageTranslator;
 
@@ -112,15 +112,15 @@ public class DiscoveryTopology extends AbstractTopology<DiscoveryTopologyConfig>
     }
 
     private void networkHistory(TopologyBuilder topology) {
-        NetworkHistorySpout spout = new NetworkHistorySpout(options, persistenceManager);
-        topology.setSpout(NetworkHistorySpout.SPOUT_ID, spout, 1);
+        NetworkHistory spout = new NetworkHistory(options, persistenceManager);
+        topology.setSpout(NetworkHistory.SPOUT_ID, spout, 1);
     }
 
     private void switchHandler(TopologyBuilder topology, int scaleFactor) {
         SwitchHandler bolt = new SwitchHandler(options, persistenceManager);
         Fields grouping = new Fields(SpeakerMonitor.FIELD_ID_DATAPATH);
         topology.setBolt(SwitchHandler.BOLT_ID, bolt, scaleFactor)
-                .fieldsGrouping(NetworkHistorySpout.SPOUT_ID, grouping)
+                .fieldsGrouping(NetworkHistory.SPOUT_ID, grouping)
                 .fieldsGrouping(SpeakerMonitor.BOLT_ID, grouping)
                 .fieldsGrouping(SpeakerMonitor.BOLT_ID, SpeakerMonitor.STREAM_REFRESH_ID, grouping)
                 .allGrouping(SpeakerMonitor.BOLT_ID, SpeakerMonitor.STREAM_SYNC_ID);

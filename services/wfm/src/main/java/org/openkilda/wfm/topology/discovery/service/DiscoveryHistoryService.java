@@ -23,7 +23,7 @@ import org.openkilda.persistence.repositories.IslRepository;
 import org.openkilda.persistence.repositories.RepositoryFactory;
 import org.openkilda.persistence.repositories.SwitchRepository;
 import org.openkilda.wfm.topology.discovery.model.DiscoveryOptions;
-import org.openkilda.wfm.topology.discovery.model.SwitchHistory;
+import org.openkilda.wfm.topology.discovery.model.facts.HistoryFacts;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,26 +44,26 @@ public class DiscoveryHistoryService extends AbstractDiscoveryService {
      * .
      */
     public void applyHistory(ISwitchPrepopulateReply reply) {
-        for (SwitchHistory history : loadNetworkHistory()) {
+        for (HistoryFacts history : loadNetworkHistory()) {
             reply.switchAddWithHistory(history);
         }
     }
 
     // -- private --
 
-    private Collection<SwitchHistory> loadNetworkHistory() {
+    private Collection<HistoryFacts> loadNetworkHistory() {
         RepositoryFactory repositoryFactory = persistenceManager.getRepositoryFactory();
         SwitchRepository switchRepository = repositoryFactory.createSwitchRepository();
 
-        HashMap<SwitchId, SwitchHistory> switchById = new HashMap<>();
+        HashMap<SwitchId, HistoryFacts> switchById = new HashMap<>();
         for (Switch switchEntry : switchRepository.findAll()) {
             SwitchId switchId = switchEntry.getSwitchId();
-            switchById.put(switchId, new SwitchHistory(switchId));
+            switchById.put(switchId, new HistoryFacts(switchId));
         }
 
         IslRepository islRepository = repositoryFactory.createIslRepository();
         for (Isl islEntry : islRepository.findAll()) {
-            SwitchHistory history = switchById.get(islEntry.getSrcSwitch().getSwitchId());
+            HistoryFacts history = switchById.get(islEntry.getSrcSwitch().getSwitchId());
             if (history == null) {
                 log.error("Orphaned ISL relation - {}-{} (read race condition?)",
                           islEntry.getSrcSwitch().getSwitchId(), islEntry.getSrcPort());

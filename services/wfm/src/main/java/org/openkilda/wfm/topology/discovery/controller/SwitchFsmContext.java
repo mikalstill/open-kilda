@@ -16,7 +16,7 @@
 package org.openkilda.wfm.topology.discovery.controller;
 
 import org.openkilda.messaging.model.SpeakerSwitchView;
-import org.openkilda.wfm.topology.discovery.model.SwitchHistory;
+import org.openkilda.wfm.topology.discovery.model.facts.HistoryFacts;
 import org.openkilda.wfm.topology.discovery.service.ISwitchReply;
 
 import lombok.Data;
@@ -26,7 +26,7 @@ public class SwitchFsmContext {
     private final ISwitchReply output;
 
     private SpeakerSwitchView speakerData;
-    private SwitchHistory history;
+    private HistoryFacts history;
 
     private Integer portNumber;
 

@@ -17,7 +17,7 @@ package org.openkilda.wfm.topology.discovery.controller;
 
 import org.openkilda.wfm.share.utils.FsmExecutor;
 import org.openkilda.wfm.topology.discovery.model.Endpoint;
-import org.openkilda.wfm.topology.discovery.model.PortFacts;
+import org.openkilda.wfm.topology.discovery.model.facts.PortFacts;
 
 import org.squirrelframework.foundation.fsm.StateMachineBuilder;
 import org.squirrelframework.foundation.fsm.StateMachineBuilderFactory;

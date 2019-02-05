@@ -22,7 +22,7 @@ import org.openkilda.messaging.info.discovery.NetworkDumpBeginMarker;
 import org.openkilda.messaging.info.discovery.NetworkDumpEndMarker;
 import org.openkilda.messaging.info.discovery.NetworkDumpSwitchData;
 import org.openkilda.messaging.model.SpeakerSwitchView;
-import org.openkilda.wfm.topology.discovery.bolt.SpeakerMonitor.OutputAdapter;
+import org.openkilda.wfm.topology.discovery.storm.bolt.SpeakerMonitor.OutputAdapter;
 import org.openkilda.wfm.topology.discovery.model.SpeakerSync;
 
 import lombok.Getter;

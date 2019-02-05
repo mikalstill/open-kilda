@@ -23,7 +23,7 @@ import org.openkilda.wfm.topology.discovery.controller.PortFsmEvent;
 import org.openkilda.wfm.topology.discovery.controller.PortFsmState;
 import org.openkilda.wfm.topology.discovery.model.DiscoveryOptions;
 import org.openkilda.wfm.topology.discovery.model.Endpoint;
-import org.openkilda.wfm.topology.discovery.model.PortFacts;
+import org.openkilda.wfm.topology.discovery.model.facts.PortFacts;
 
 import java.util.HashMap;
 import java.util.Map;

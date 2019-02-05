@@ -23,8 +23,8 @@ import org.openkilda.messaging.info.event.IslInfoData;
 import org.openkilda.messaging.info.event.PortInfoData;
 import org.openkilda.messaging.info.event.SwitchInfoData;
 import org.openkilda.wfm.share.utils.WatchDog;
-import org.openkilda.wfm.topology.discovery.bolt.SpeakerMonitor.OutputAdapter;
 import org.openkilda.wfm.topology.discovery.model.OperationMode;
+import org.openkilda.wfm.topology.discovery.storm.bolt.SpeakerMonitor.OutputAdapter;
 
 import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;

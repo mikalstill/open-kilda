@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 
 import org.openkilda.messaging.command.discovery.NetworkCommandData;
 import org.openkilda.wfm.CommandContext;
-import org.openkilda.wfm.topology.discovery.bolt.SpeakerMonitor.OutputAdapter;
+import org.openkilda.wfm.topology.discovery.storm.bolt.SpeakerMonitor.OutputAdapter;
 
 import org.junit.Before;
 import org.junit.Test;
