@@ -27,6 +27,7 @@ import org.openkilda.wfm.topology.discovery.storm.ComponentId;
 import org.openkilda.wfm.topology.discovery.storm.bolt.InputDecoder;
 import org.openkilda.wfm.topology.discovery.storm.bolt.isl.IslHandler;
 import org.openkilda.wfm.topology.discovery.storm.bolt.MonotonicTick;
+import org.openkilda.wfm.topology.discovery.storm.bolt.watchlist.WatchListHandler;
 import org.openkilda.wfm.topology.discovery.storm.spout.NetworkHistory;
 import org.openkilda.wfm.topology.discovery.storm.bolt.port.PortHandler;
 import org.openkilda.wfm.topology.discovery.storm.bolt.SpeakerEncoder;
@@ -72,6 +73,9 @@ public class DiscoveryTopology extends AbstractTopology<DiscoveryTopologyConfig>
         speakerMonitor(topology);
 
         networkHistory(topology);
+
+        watchList(topology, scaleFactor);
+
         switchHandler(topology, scaleFactor);
         portHandler(topology, scaleFactor);
         bfdPortHandler(topology, scaleFactor);
@@ -114,6 +118,14 @@ public class DiscoveryTopology extends AbstractTopology<DiscoveryTopologyConfig>
     private void networkHistory(TopologyBuilder topology) {
         NetworkHistory spout = new NetworkHistory(options, persistenceManager);
         topology.setSpout(NetworkHistory.SPOUT_ID, spout, 1);
+    }
+
+    private void watchList(TopologyBuilder topology, int scaleFactor) {
+        WatchListHandler bolt = new WatchListHandler(options);
+        Fields portGrouping = new Fields(PortHandler.FIELD_ID_DATAPATH, PortHandler.FIELD_ID_PORT_NUMBER);
+        topology.setBolt(WatchListHandler.BOLT_ID, bolt, scaleFactor)
+                .allGrouping(CoordinatorSpout.ID)
+                .fieldsGrouping(PortHandler.BOLT_ID, PortHandler.STREAM_POLL_ID, portGrouping);
     }
 
     private void switchHandler(TopologyBuilder topology, int scaleFactor) {

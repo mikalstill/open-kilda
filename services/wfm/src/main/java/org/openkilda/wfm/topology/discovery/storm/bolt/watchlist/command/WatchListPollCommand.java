@@ -13,22 +13,26 @@
  *   limitations under the License.
  */
 
-package org.openkilda.wfm.topology.discovery.storm.bolt.port.command;
+package org.openkilda.wfm.topology.discovery.storm.bolt.watchlist.command;
 
 import org.openkilda.wfm.topology.discovery.model.Endpoint;
-import org.openkilda.wfm.topology.discovery.service.DiscoveryPortService;
-import org.openkilda.wfm.topology.discovery.service.IPortReply;
+import org.openkilda.wfm.topology.discovery.service.DiscoveryWatchListService;
+import org.openkilda.wfm.topology.discovery.service.IWatchListServiceCarrier;
 
-public class PortOnlineModeCommand extends PortCommand {
-    private final boolean online;
+public class WatchListPollCommand extends WatchListCommand {
+    private final boolean enable;
 
-    public PortOnlineModeCommand(Endpoint endpoint, boolean online) {
+    public WatchListPollCommand(Endpoint endpoint, boolean enable) {
         super(endpoint);
-        this.online = online;
+        this.enable = enable;
     }
 
     @Override
-    public void apply(DiscoveryPortService service, IPortReply output) {
-        service.portOnlineModeSwitch(getEndpoint(), online, output);
+    public void apply(DiscoveryWatchListService service, IWatchListServiceCarrier output) {
+        if (enable) {
+            service.addWatch(output, getEndpoint());
+        } else {
+            service.removeWatch(output, getEndpoint());
+        }
     }
 }

@@ -21,6 +21,8 @@ public enum ComponentId {
     INPUT("input"),
     INPUT_DECODER("input.decoder"),
 
+    WATCH_LIST("watch-list-handler"),
+
     FL_MONITOR("fl-monitor"),
     NETWORK_PRELOADER("network-preloader"),
     SWITCH_HANDLER("switch-handler"),

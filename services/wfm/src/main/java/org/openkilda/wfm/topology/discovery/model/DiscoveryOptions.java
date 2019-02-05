@@ -17,19 +17,19 @@ package org.openkilda.wfm.topology.discovery.model;
 
 import org.openkilda.wfm.topology.discovery.DiscoveryTopologyConfig;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Value;
 
 import java.io.Serializable;
+import java.util.concurrent.TimeUnit;
 
 @Value
-@Builder
-@AllArgsConstructor
 public class DiscoveryOptions implements Serializable {
-    private final Integer bfdLocalPortOffset;
+    private Long discoveryIntervalMs;
+
+    private Integer bfdLocalPortOffset;
 
     public DiscoveryOptions(DiscoveryTopologyConfig topologyConfig) {
+        discoveryIntervalMs = TimeUnit.SECONDS.toMillis(topologyConfig.getDiscoveryInterval());
         bfdLocalPortOffset = topologyConfig.getBfdPortOffset();
     }
 }

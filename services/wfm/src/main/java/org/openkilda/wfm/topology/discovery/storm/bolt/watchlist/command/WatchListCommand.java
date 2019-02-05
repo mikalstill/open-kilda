@@ -13,20 +13,21 @@
  *   limitations under the License.
  */
 
-package org.openkilda.wfm.topology.discovery.storm.bolt.sw.command;
+package org.openkilda.wfm.topology.discovery.storm.bolt.watchlist.command;
 
-import org.openkilda.model.SwitchId;
-import org.openkilda.wfm.topology.discovery.service.DiscoverySwitchService;
-import org.openkilda.wfm.topology.discovery.service.ISwitchReply;
+import org.openkilda.wfm.topology.discovery.model.Endpoint;
+import org.openkilda.wfm.topology.discovery.service.DiscoveryWatchListService;
+import org.openkilda.wfm.topology.discovery.service.IWatchListServiceCarrier;
 import org.openkilda.wfm.topology.discovery.storm.ICommand;
 
 import lombok.Getter;
 
-public abstract class SwitchCommand implements ICommand<DiscoverySwitchService, ISwitchReply> {
+public abstract class WatchListCommand implements ICommand<DiscoveryWatchListService, IWatchListServiceCarrier> {
     @Getter
-    private final SwitchId datapath;
 
-    protected SwitchCommand(SwitchId datapath) {
-        this.datapath = datapath;
+    private final Endpoint endpoint;
+
+    public WatchListCommand(Endpoint endpoint) {
+        this.endpoint = endpoint;
     }
 }

@@ -19,14 +19,15 @@ import org.openkilda.messaging.info.event.PathNode;
 import org.openkilda.messaging.model.NetworkEndpoint;
 import org.openkilda.model.SwitchId;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Value;
 
 import java.io.Serializable;
 
-@Data
-@AllArgsConstructor
+@Value(staticConstructor = "of")
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @EqualsAndHashCode
 public class Endpoint implements Serializable {
     private SwitchId datapath;

@@ -1,5 +1,4 @@
-/*
- * Copyright 2019 Telstra Open Source
+/* Copyright 2019 Telstra Open Source
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -23,14 +22,14 @@ import org.openkilda.wfm.error.AbstractException;
 import org.openkilda.wfm.error.PipelineException;
 import org.openkilda.wfm.topology.discovery.model.DiscoveryOptions;
 import org.openkilda.wfm.topology.discovery.model.Endpoint;
-import org.openkilda.wfm.topology.discovery.storm.bolt.port.command.PortCommand;
-import org.openkilda.wfm.topology.discovery.storm.bolt.uniisl.command.UniIslCommand;
-import org.openkilda.wfm.topology.discovery.storm.bolt.uniisl.command.UniIslPhysicalDownCommand;
-import org.openkilda.wfm.topology.discovery.storm.bolt.uniisl.command.UniIslSetupCommand;
 import org.openkilda.wfm.topology.discovery.service.DiscoveryPortService;
 import org.openkilda.wfm.topology.discovery.service.IPortReply;
 import org.openkilda.wfm.topology.discovery.storm.ComponentId;
+import org.openkilda.wfm.topology.discovery.storm.bolt.port.command.PortCommand;
 import org.openkilda.wfm.topology.discovery.storm.bolt.sw.SwitchHandler;
+import org.openkilda.wfm.topology.discovery.storm.bolt.uniisl.command.UniIslCommand;
+import org.openkilda.wfm.topology.discovery.storm.bolt.uniisl.command.UniIslPhysicalDownCommand;
+import org.openkilda.wfm.topology.discovery.storm.bolt.uniisl.command.UniIslSetupCommand;
 
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.tuple.Fields;
